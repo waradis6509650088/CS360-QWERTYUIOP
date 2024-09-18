@@ -1,6 +1,6 @@
 # CS360 1/2567 Term Project: Food Advisor
 ## Group Information
-- **Group Name:** QWERTY
+- **Group Name:** QWERTYUIOP
 ## Members
 | Name | Student ID |
 |------------------------------- ---|-----------------|
@@ -25,9 +25,9 @@
 - [Feature 5: e.g., Responsive design for mobile and desktop users]
 ### Technologies Used
 - **Backend:** Strapi V4
-- **Frontend:** React.js (or specify alternative if chosen)
+- **Frontend:** React.js 
 - **Hosting/Deployment:** AWS EC2
-- **Database:** [Specify the database used, e.g., SQLite, PostgreSQL, MongoDB]
+- **Database:** SQLite
 ## How to deploy and run the project manually
 1.
 2.
