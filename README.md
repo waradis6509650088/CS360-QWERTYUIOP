@@ -16,16 +16,16 @@
 | Primchawat Areerat | 6309651039 |
 
 ## Project Goal
-[Briefly describe the purpose and concept of your web application. What problem does it solve or what opportunity does it create?]
+Foodadvisor is a food recommendation web application where it shows blog posts according to what user want using user's chosen food categories
 ### Features
-- [Feature 1: e.g., User Registration and Authentication]
-- [Feature 2: e.g., CRUD operations for managing products]
-- [Feature 3: e.g., Real-time notifications using WebSocket]
-- [Feature 4: e.g., Integration with third-party APIs]
-- [Feature 5: e.g., Responsive design for mobile and desktop users]
+- **Feature 1**: user is able to choose food categories and location
+- **Feature 2**: the application shows relevant blog post according to the user's chosen food categories
+- **Feature 3**: the application have a subscription service
+- **Feature 4**: the application can show blog post that user choose
+- **Feature 5**: the application use CRUD service through Strapi API
 ### Technologies Used
 - **Backend:** Strapi V4
-- **Frontend:** React.js 
+- **Frontend:** NextJS + Tailwind
 - **Hosting/Deployment:** AWS EC2
 - **Database:** SQLite
 ## How to deploy and run the project manually
