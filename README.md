@@ -16,7 +16,10 @@
 | Primchawat Areerat | 6309651039 |
 
 ## Project Goal
-Foodadvisor is a food recommendation web application where it shows blog posts according to what user want using user's chosen food categories
+Foodadvisor is a web application designed to simplify the process of discovering food-related content, such as blog posts, based on the user’s specific preferences. By allowing users to select their favorite food categories, it ensures personalized recommendations, thus enhancing user engagement and satisfaction.
+
+The application addresses the challenge of information overload, particularly in the food industry where users often struggle to find relevant, high-quality content that fits their tastes. By offering a tailored approach, Foodadvisor solves the problem of inefficient food content discovery and creates an opportunity for food bloggers, restaurants, and food enthusiasts to connect in a more meaningful, user-centric way. This results in a better browsing experience, helping users find food inspiration more quickly and easily.
+
 ### Features
 - **Feature 1**: user is able to choose food categories and location
 - **Feature 2**: the application shows relevant blog post according to the user's chosen food categories
