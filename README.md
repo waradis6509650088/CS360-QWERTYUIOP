@@ -267,28 +267,28 @@ http://Your_Public_IP:3000
 
 
 ## How to deploy and run the project using the provided bash script [Specify the bash script path in the repo]
-#### 1.Locate to bash scirpt file
+#### 1. Locate to bash scirpt file
 ```
 cd /CS360-QWERTYUIOP/scirpt
 ```
 
-#### 2.Change the file permissions to make it executable as a program.
+#### 2. Change the file permissions to make it executable as a program.
 ```
 chmod +x deploy.sh
 ```
 
-#### 3.Run bash scirpt file
+#### 3. Run bash script file
 ```
 ./deploy.sh
 ```
 
-### If you don't have bash scirpt file
+### If you don't have bash script file
 #### 1. Create bash script file
 ```
 touch deploy.sh
 ```
 
-#### 2. Put the code into the bash scirpt file
+#### 2. Put the code into the bash script file
 ```
 #!/bin/bash
 
@@ -486,14 +486,14 @@ echo "You can access the Strapi Admin Panel at http://$PUBLIC_IP:1337/admin"
 echo "You can access the Client Application at http://$PUBLIC_IP:3000"
 echo "Use 'pm2 status' to check the status of your applications."
 ```
-#### 3.Save and exit bash script file
+#### 3. Save and exit bash script file
 ```
 ctrl o to save the bash script file
-ctrl x to exit the bash scirpt file
+ctrl x to exit the bash script file
 ```
-#### 4.Change the file permissions to make it executable as a program.
+#### 4. Change the file permissions to make it executable as a program.
 ```
-chmod +x YOUR_BASH_SCIRPT_FILE
+chmod +x YOUR_BASH_SCRIPT_FILE
 ```
 #### 5.Run your bash scirpt file
 ```
