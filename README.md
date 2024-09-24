@@ -16,16 +16,19 @@
 | Primchawat Areerat | 6309651039 |
 
 ## Project Goal
-[Briefly describe the purpose and concept of your web application. What problem does it solve or what opportunity does it create?]
+Foodadvisor is a web application designed to simplify the process of discovering food-related content, such as blog posts, based on the user’s specific preferences. By allowing users to select their favorite food categories, it ensures personalized recommendations, thus enhancing user engagement and satisfaction.
+
+The application addresses the challenge of information overload, particularly in the food industry where users often struggle to find relevant, high-quality content that fits their tastes. By offering a tailored approach, Foodadvisor solves the problem of inefficient food content discovery and creates an opportunity for food bloggers, restaurants, and food enthusiasts to connect in a more meaningful, user-centric way. This results in a better browsing experience, helping users find food inspiration more quickly and easily.
+
 ### Features
-- [Feature 1: e.g., User Registration and Authentication]
-- [Feature 2: e.g., CRUD operations for managing products]
-- [Feature 3: e.g., Real-time notifications using WebSocket]
-- [Feature 4: e.g., Integration with third-party APIs]
-- [Feature 5: e.g., Responsive design for mobile and desktop users]
+- **Feature 1**: user is able to choose food categories and location
+- **Feature 2**: the application shows relevant blog post according to the user's chosen food categories
+- **Feature 3**: the application have a subscription service
+- **Feature 4**: the application can show blog post that user choose
+- **Feature 5**: the application use CRUD service through Strapi API
 ### Technologies Used
 - **Backend:** Strapi V4
-- **Frontend:** React.js 
+- **Frontend:** NextJS + Tailwind
 - **Hosting/Deployment:** AWS EC2
 - **Database:** SQLite
 ## How to deploy and run the project manually
@@ -267,17 +270,25 @@ http://Your_Public_IP:3000
 
 
 ## How to deploy and run the project using the provided bash script [Specify the bash script path in the repo]
+<<<<<<< HEAD
 #### 1.Locate to bash script file
+=======
+#### 1. Locate to bash scirpt file
+>>>>>>> 525c33f6124fd623e9466ec77fd1bf47c8a971e1
 ```
 cd /CS360-QWERTYUIOP/script
 ```
 
-#### 2.Change the file permissions to make it executable as a program.
+#### 2. Change the file permissions to make it executable as a program.
 ```
 chmod +x deploy.sh
 ```
 
+<<<<<<< HEAD
 #### 3.Run bash script file
+=======
+#### 3. Run bash script file
+>>>>>>> 525c33f6124fd623e9466ec77fd1bf47c8a971e1
 ```
 ./deploy.sh
 ```
@@ -486,12 +497,12 @@ echo "You can access the Strapi Admin Panel at http://$PUBLIC_IP:1337/admin"
 echo "You can access the Client Application at http://$PUBLIC_IP:3000"
 echo "Use 'pm2 status' to check the status of your applications."
 ```
-#### 3.Save and exit bash script file
+#### 3. Save and exit bash script file
 ```
 ctrl o to save the bash script file
 ctrl x to exit the bash script file
 ```
-#### 4.Change the file permissions to make it executable as a program.
+#### 4. Change the file permissions to make it executable as a program.
 ```
 chmod +x YOUR_BASH_SCRIPT_FILE
 ```
@@ -499,3 +510,4 @@ chmod +x YOUR_BASH_SCRIPT_FILE
 ```
 ./YOUR_BASH_SCRIPT_FILE
 ```
+![Screenshot (383)](https://github.com/user-attachments/assets/768b01b4-486c-491f-8bf9-9042935108ee)
