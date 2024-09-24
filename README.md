@@ -270,11 +270,10 @@ http://Your_Public_IP:3000
 
 
 ## How to deploy and run the project using the provided bash script [Specify the bash script path in the repo]
-<<<<<<< HEAD
-#### 1.Locate to bash script file
-=======
-#### 1. Locate to bash scirpt file
->>>>>>> 525c33f6124fd623e9466ec77fd1bf47c8a971e1
+
+
+#### 1. Locate to bash script file
+
 ```
 cd /CS360-QWERTYUIOP/script
 ```
@@ -284,11 +283,7 @@ cd /CS360-QWERTYUIOP/script
 chmod +x deploy.sh
 ```
 
-<<<<<<< HEAD
-#### 3.Run bash script file
-=======
 #### 3. Run bash script file
->>>>>>> 525c33f6124fd623e9466ec77fd1bf47c8a971e1
 ```
 ./deploy.sh
 ```
