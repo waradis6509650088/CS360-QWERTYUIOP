@@ -505,4 +505,5 @@ chmod +x YOUR_BASH_SCRIPT_FILE
 ```
 ./YOUR_BASH_SCRIPT_FILE
 ```
-![Screenshot (383)](https://github.com/user-attachments/assets/768b01b4-486c-491f-8bf9-9042935108ee)
+
+![Screenshot 2024-09-24 163409](https://github.com/user-attachments/assets/b17ef25c-fe2f-4094-85b5-000cce77acc2)
