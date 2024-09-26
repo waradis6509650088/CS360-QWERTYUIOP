@@ -295,7 +295,7 @@ touch deploy.sh
 ```
 
 #### 2. Put the code into the bash script file
-```
+```bash
 #!/bin/bash
 
 PUBLIC_IP=$(curl -s ifconfig.me) # Public ipv4 address
