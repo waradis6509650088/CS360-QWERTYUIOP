@@ -3,10 +3,13 @@ import Cta from './cta';
 import LocalSwitch from './localSwitch';
 import Logo from './logo';
 import Nav from './nav';
-
-import GitHubButton from 'react-github-btn';
+import { useContext } from 'react';
+import { AuthContext } from '../../../context/AuthContext';
+import Link from 'next/link';
 
 const Navigation = ({ navigation, pageData, type }) => {
+  const { user, logout } = useContext(AuthContext);
+
   return (
     <header className="text-gray-600 bg-white body-font border-b-2">
       <div className="container mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
@@ -21,23 +24,27 @@ const Navigation = ({ navigation, pageData, type }) => {
         />
 
         {delve(navigation, 'rightButton') && (
-          <div className="flex">
-            <div className="mr-5 py-4 px-6 hidden 2xl:block">
-              <GitHubButton
-                href="https://github.com/strapi/foodadvisor"
-                data-show-count="true"
-                data-size="large"
-                aria-label="Star strapi/foodadvisor on GitHub"
-              >
-                Star
-              </GitHubButton>
+          <div className="flex items-center">
+            {user ? (
+              <>
+                <span className="mr-5 text-gray-700">Hello, {user.username}</span>
+                <button
+                  onClick={logout}
+                  className="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link href="/auth">
+                <a className="bg-primary hover:bg-primary-dark text-white font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out transform hover:-translate-y-1 hover:shadow-lg">
+                  Login / Register
+                </a>
+              </Link>
+            )}
+            <div className="ml-4">
+              <LocalSwitch pageData={pageData} type={type} />
             </div>
-            <Cta
-              href={delve(navigation, 'rightButton.href')}
-              target={delve(navigation, 'rightButton.target')}
-              label={delve(navigation, 'rightButton.label')}
-            />
-            <LocalSwitch pageData={pageData} type={type} />
           </div>
         )}
       </div>
