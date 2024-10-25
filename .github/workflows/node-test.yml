@@ -1,0 +1,35 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ test-feature06 ]
+  pull_request:
+    branches: [ develop-feature06, develop, main ]
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu, debian, redhat]
+        node-version: [18.x, 20.x, 22.x]
+    
+    runs-on: self-hosted-${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    
+    - name: Install dependencies
+      run: |
+        npm install -g jest
+        npm install
+    
+    - name: Build
+      run: npm run build --if-present
+    
+    - name: Test
+      run: npm test
