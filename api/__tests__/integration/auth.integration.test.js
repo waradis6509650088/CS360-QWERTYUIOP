@@ -10,41 +10,24 @@ describe('Auth Integration Tests', () => {
     await strapi.start();
     request = supertest(strapi.server.httpServer);
 
-    // Create test public user with proper role
-    const publicRole = await strapi.query('plugin::users-permissions.role').findOne({ 
-      where: { type: 'authenticated' }
-    });
-
+    // Create test public user
     await strapi.plugins['users-permissions'].services.user.add({
       username: 'testuser',
       email: 'test@example.com',
       password: 'Password123!',
-      role: publicRole.id,
-      job: 'Customer',
-      confirmed: true
+      job: 'Customer'
     });
 
-    // Create existing user for duplicate test
+    // Create public user to test duplicate registration
     await strapi.plugins['users-permissions'].services.user.add({
-      username: 'existing',
+      username: 'existinguser',
       email: 'existing@example.com',
       password: 'Password123!',
-      role: publicRole.id,
-      job: 'Customer',
-      confirmed: true
+      job: 'Customer'
     });
   }, 30000); 
 
   afterAll(async () => {
-    // Clean up test users
-    await strapi.db.query('plugin::users-permissions.user').deleteMany({
-      where: {
-        email: {
-          $in: ['test@example.com', 'existing@example.com', 'newuser@example.com']
-        }
-      }
-    });
-    
     await strapi.destroy();
   }, 30000);
 
@@ -95,8 +78,8 @@ describe('Auth Integration Tests', () => {
 
     it('should fail registration with existing email', async () => {
       const existingUser = {
-        username: 'newuser',
-        email: 'existing@example.com', // Use the email we created in beforeAll
+        username: 'existing',
+        email: 'admin@strapidemo.com',
         password: 'Password123!',
         job: 'Customer',
       };
