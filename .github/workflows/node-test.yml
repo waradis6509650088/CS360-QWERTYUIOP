@@ -30,7 +30,7 @@ jobs:
       run: |
         yarn global add jest
         yarn add @babel/runtime
-        yarn && yarn seed
+        yarn 
     
     - name: Test
       run: yarn test
