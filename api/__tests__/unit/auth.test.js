@@ -87,22 +87,9 @@ describe('Auth Unit Tests', () => {
       jest.clearAllMocks();
     });
 
-    afterAll(async () => {
-      try {
-        const res = await fetch('/api/users/2', {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${mockUser.jwt}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!res.ok) {
-          console.warn('Failed to cleanup test user');
-        }
-      } catch (error) {
-        console.warn('Error during cleanup:', error);
-      }
+    afterAll(() => {
+      // Remove mock implementation after tests
+      jest.restoreAllMocks();
     });
 
     it('should successfully register a new user within timeout', async () => {
