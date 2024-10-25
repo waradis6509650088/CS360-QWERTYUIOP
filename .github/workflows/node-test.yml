@@ -27,10 +27,12 @@ jobs:
       run: npm install -g yarn
 
     - name: Install dependencies
+      working-directory: ./api
       run: |
         yarn global add jest
         yarn add @babel/runtime
         yarn 
     
     - name: Test
+      working-directory: ./api
       run: yarn test:coverage
