@@ -71,7 +71,7 @@ describe('Auth Integration Tests', () => {
     it('should fail registration with existing email', async () => {
       const existingUser = {
         username: 'existing',
-        email: 'test@example.com',
+        email: '123@gmail.com',
         password: 'Password123!',
         job: 'Customer',
       };
