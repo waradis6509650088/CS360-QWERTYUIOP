@@ -17,11 +17,11 @@ describe('Auth Integration Tests', () => {
       password: 'Password123!',
       job: 'Customer'
     });
-  });
+  }, 30000); 
 
   afterAll(async () => {
     await strapi.destroy();
-  });
+  }, 30000);
 
   describe('POST /api/auth/local', () => {
     it('should login successfully with valid credentials', async () => {
