@@ -34,10 +34,19 @@ jobs:
         sudo yum groupinstall "Development Tools" -y
         sudo yum install gcc gcc-c++ make -y
         
+    - name: Create required directories
+      run: |
+        mkdir -p public/uploads
+        mkdir -p .tmp
+        
     - name: Install dependencies
       run: |
         npm install
+        npm install @babel/runtime
         npm install -g jest
-    
+        
+    - name: Run seed script
+      run: npm run seed
+        
     - name: Test
       run: npm test
