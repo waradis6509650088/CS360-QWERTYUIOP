@@ -5,6 +5,7 @@ import Logo from './logo';
 import Nav from './nav';
 
 import GitHubButton from 'react-github-btn';
+import Link from 'next/link';
 
 const Navigation = ({ navigation, pageData, type }) => {
   return (
@@ -38,6 +39,17 @@ const Navigation = ({ navigation, pageData, type }) => {
               label={delve(navigation, 'rightButton.label')}
             />
             <LocalSwitch pageData={pageData} type={type} />
+
+            <Link href="/userprofile">
+              <a className="flex items-center hover:text-gray-900">
+                <img
+                  src="/user.png"
+                  alt="User Profile"
+                  className="w-8 h-8 mr-2"
+                />
+              </a>
+
+            </Link>
           </div>
         )}
       </div>
