@@ -32,7 +32,13 @@ jobs:
         yarn global add jest
         yarn add @babel/runtime
         yarn && yarn seed
+        echo "JWT_SECRET=test-jwt-secret" >> .env
+        echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
     
-    - name: Test
+    - name: Run unit tests
       working-directory: ./api
-      run: yarn test:coverage
+      run: yarn test:unit
+    
+    - name: Run integration tests
+      working-directory: ./api
+      run: yarn test:integration
