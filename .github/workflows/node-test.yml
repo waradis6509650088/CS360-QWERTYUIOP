@@ -33,4 +33,4 @@ jobs:
         yarn 
     
     - name: Test
-      run: yarn test
+      run: yarn test:coverage
