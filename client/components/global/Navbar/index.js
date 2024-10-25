@@ -41,11 +41,11 @@ const Navigation = ({ navigation, pageData, type }) => {
             <LocalSwitch pageData={pageData} type={type} />
 
             <Link href="/userprofile">
-              <a className="flex items-center hover:text-gray-900">
+              <a className="flex items-center hover:text-gray-900 ml-8 -mt-2">
                 <img
                   src="/user.png"
                   alt="User Profile"
-                  className="w-8 h-8 mr-2"
+                  className="w-9 h-9 mr-2"
                 />
               </a>
 
