@@ -9,19 +9,11 @@ describe('Auth Integration Tests', () => {
     strapi = await Strapi().load();
     await strapi.start();
     request = supertest(strapi.server.httpServer);
-
-    // Create test public user
-    await strapi.plugins['users-permissions'].services.user.add({
+    
+    // Create test user
+    await strapi.admin.services.user.create({
       username: 'testuser',
       email: 'test@example.com',
-      password: 'Password123!',
-      job: 'Customer'
-    });
-
-    // Create public user to test duplicate registration
-    await strapi.plugins['users-permissions'].services.user.add({
-      username: 'existinguser',
-      email: 'existing@example.com',
       password: 'Password123!',
       job: 'Customer'
     });
@@ -79,7 +71,7 @@ describe('Auth Integration Tests', () => {
     it('should fail registration with existing email', async () => {
       const existingUser = {
         username: 'existing',
-        email: 'admin@strapidemo.com',
+        email: 'test@example.com',
         password: 'Password123!',
         job: 'Customer',
       };
