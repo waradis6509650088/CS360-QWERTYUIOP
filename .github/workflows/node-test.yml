@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu, debian, redhat]
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [16.x, 18.x]
     
     runs-on: self-hosted-${{ matrix.os }}
     
@@ -29,10 +29,15 @@ jobs:
         cache: 'npm'
         cache-dependency-path: './api/package-lock.json'
     
+    - name: Install build essentials
+      run: |
+        sudo yum groupinstall "Development Tools" -y
+        sudo yum install gcc gcc-c++ make -y
+        
     - name: Install dependencies
       run: |
-        npm install -g jest
         npm install
+        npm install -g jest
     
     - name: Test
       run: npm test
