@@ -9,9 +9,9 @@ describe('Auth Integration Tests', () => {
     strapi = await Strapi().load();
     await strapi.start();
     request = supertest(strapi.server.httpServer);
-    
-    // Create test user
-    await strapi.admin.services.user.create({
+
+    // Create test public user
+    await strapi.plugins['users-permissions'].services.user.add({
       username: 'testuser',
       email: 'test@example.com',
       password: 'Password123!',
