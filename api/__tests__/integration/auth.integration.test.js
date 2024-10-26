@@ -7,16 +7,17 @@ describe('Auth Integration Tests', () => {
   let authRole;
 
   beforeAll(async () => {
+    // เริ่มต้น Strapi และเซิร์ฟเวอร์สำหรับการทดสอบ
     strapi = await Strapi().load();
     await strapi.start();
     request = supertest(strapi.server.httpServer);
 
-    // Retrieve the 'Authenticated' role
+    // ดึงข้อมูล Role 'Authenticated'
     authRole = await strapi.query('plugin::users-permissions.role').findOne({
       where: { type: 'authenticated' },
     });
 
-    // Create test public user
+    // สร้าง public test user
     await strapi.plugins['users-permissions'].services.user.add({
       username: 'testuser',
       email: 'test@example.com',
@@ -30,7 +31,7 @@ describe('Auth Integration Tests', () => {
   }, 30000);
 
   afterAll(async () => {
-    // Clean up test users
+    // ลบผู้ใช้ที่สร้างขึ้น
     await strapi.db.query('plugin::users-permissions.user').deleteMany({
       where: {
         email: {
@@ -43,6 +44,7 @@ describe('Auth Integration Tests', () => {
 
   describe('POST /api/auth/local', () => {
     it('should login successfully with valid credentials', async () => {
+      // ทดสอบการเข้าสู่ระบบด้วยข้อมูลที่ถูกต้อง
       const response = await request.post('/api/auth/local').send({
         identifier: 'test@example.com',
         password: 'Password123!',
@@ -54,6 +56,7 @@ describe('Auth Integration Tests', () => {
     });
 
     it('should fail login with invalid credentials', async () => {
+      // ทดสอบการเข้าสู่ระบบด้วยข้อมูลที่ไม่ถูกต้อง
       const response = await request.post('/api/auth/local').send({
         identifier: 'wrong@email.com',
         password: 'wrongpassword',
@@ -66,7 +69,7 @@ describe('Auth Integration Tests', () => {
 
   describe('POST /api/auth/local/register', () => {
     beforeEach(async () => {
-      // Create existing user for duplicate registration test
+      // สร้างผู้ใช้ที่มีอยู่แล้วสำหรับการทดสอบการลงทะเบียนซ้ำ
       await strapi.plugins['users-permissions'].services.user.add({
         username: 'existinguser',
         email: 'existing@example.com',
@@ -80,12 +83,11 @@ describe('Auth Integration Tests', () => {
     });
 
     afterEach(async () => {
-      // Clean up the existing user after each test
+      // ลบผู้ใช้ที่สร้างใน beforeEach และผู้ใช้ที่ลงทะเบียนใหม่
       await strapi.db.query('plugin::users-permissions.user').deleteMany({
         where: { email: 'existing@example.com' },
       });
 
-      // Also clean up any newly registered users
       await strapi.db.query('plugin::users-permissions.user').deleteMany({
         where: {
           email: {
@@ -96,6 +98,7 @@ describe('Auth Integration Tests', () => {
     });
 
     it('should successfully register a new user', async () => {
+      // ทดสอบการลงทะเบียนผู้ใช้ใหม่
       const newUser = {
         username: 'newuser',
         email: 'newuser@example.com',
@@ -111,9 +114,10 @@ describe('Auth Integration Tests', () => {
     });
 
     it('should fail registration with existing email', async () => {
+      // ทดสอบการลงทะเบียนด้วยอีเมลที่มีอยู่แล้ว
       const existingUser = {
         username: 'anotheruser',
-        email: 'existing@example.com', // Using the email created in beforeEach
+        email: 'existing@example.com', // ใช้อีเมลที่สร้างใน beforeEach
         password: 'Password123!',
         job: 'Customer',
       };
@@ -125,9 +129,10 @@ describe('Auth Integration Tests', () => {
     });
 
     it('should validate required fields', async () => {
+      // ทดสอบการตรวจสอบข้อมูลที่จำเป็น (เช่น email และ password ขาดหาย)
       const invalidUser = {
         username: 'testuser',
-        // Missing other required fields like email and password
+        // ขาดข้อมูลที่จำเป็น เช่น email และ password
       };
 
       const response = await request.post('/api/auth/local/register').send(invalidUser);
