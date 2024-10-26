@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import 'tailwindcss/tailwind.css';
 import { getStrapiURL } from "../utils";
 import { getLocalizedParams } from "../utils/localize";
+import { AuthProvider } from '../context/AuthContext'; // Import AuthProvider
 
 const queryClient = new QueryClient();
 
@@ -14,11 +15,11 @@ function MyApp({ Component, pageProps }) {
   }
 
   return (
-    <>
+    <AuthProvider> {/* Wrap with AuthProvider */}
       <QueryClientProvider client={queryClient}>
         <Component {...pageProps} />
       </QueryClientProvider>
-    </>
+    </AuthProvider>
   );
 }
 
