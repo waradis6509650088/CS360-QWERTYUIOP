@@ -11,7 +11,7 @@ const UserProfile = ({ token = "your token"}) => {
    useEffect(() => {
     const getProfileData = async () => {
         try {
-            const {data} = await axios.get(`http://localhost:1337/api/users/me`, {
+            const {data} = await axios.get(`http://localhost:1337/api/users/1?populate=*`, {
                 headers: {
                     Authorization: `bearer ${token}`,
                 },
@@ -25,27 +25,30 @@ const UserProfile = ({ token = "your token"}) => {
        getProfileData()
    },[token, isUserUpdated])
 
-   console.log({user})
+   const avatarUrl = user.picture?.url ? `http://localhost:1337${user.picture.url}` : null;
+
+   //console.log({user})
    
    return (
         <div className="profile">
             <div className="avatar">
                 <div className="avatar-wrapper">
-                    {user.avatarUrl ? (
+                    {avatarUrl ? (
                         <img
-                            src={`http://localhost:1337${user.avatarUrl}`}
-                            alt={`${user.username} avatar`}
+                            //src={`http://localhost:1337${user.picture.url}`}
+                            src={avatarUrl}
+                            //alt={`${user.username} avatar`}
                         />
                     ) : (
                         <IoPersonCircleOutline />
                     )}
                     <UploadAvatar
                         token={token}
-                        userId={user.id}
-                        username={user.username}
+                        //userId={user.id}
+                        //username={user.username}
                         //email={user.email}
                         //job={user.job}
-                        avatarUrl={user.avatarUrl}
+                        avatarUrl={avatarUrl}
                         setisUserUpdated={setisUserUpdated}
                     />
                 </div>
@@ -53,7 +56,22 @@ const UserProfile = ({ token = "your token"}) => {
             <div className="body">
                 <p>Name: {user.username}</p>
                 <p>Email: {user.email}</p>
-                <p>Account: Not blocked</p>
+                <p>Job: {user.job}</p>
+                
+                <div className="reviews">
+                    <h3>Reviews:</h3>
+                    {user.reviews && user.reviews.length > 0 ? (
+                        user.reviews.map((review) => (
+                            <div key={review.id}>
+                                <p>Content: {review.content}</p>
+                                <p>Note: {review.note}</p>
+                                <p>Locale: {review.locale}</p>
+                            </div>
+                        ))
+                    ) : (
+                        <p>No review</p>
+                    )}
+                </div>
             </div>
 
         </div>
@@ -61,69 +79,3 @@ const UserProfile = ({ token = "your token"}) => {
 };
 
 export default UserProfile;
-
-/*import axios from "axios";
-import React, { useState, useEffect } from "react";
-import { IoPersonCircleOutline } from "react-icons/io5";
-import UploadAvatar from "./UploadAvatar";
-
-const UserProfile = ({ token }) => {
-   const [user, setUser] = useState({
-       avatarUrl: '',
-       username: '',
-       email: '',
-       job: '',
-       id: null,
-   });
-   const [isUserUpdated, setIsUserUpdated] = useState(false);
-
-   useEffect(() => {
-       const getProfileData = async () => {
-           try {
-               const { data } = await axios.get(`http://localhost:1337/api/users/me`, {
-                   headers: {
-                       Authorization: `bearer ${token}`,
-                   },
-               });
-               setUser(data);
-               setIsUserUpdated(false);
-           } catch (error) {
-               console.log({ error });
-           }
-       };
-       getProfileData();
-   }, [token, isUserUpdated]);
-
-   return (
-       <div className="profile">
-           <div className="avatar">
-               <div className="avatar-wrapper">
-                   {user && user.avatarUrl ? (
-                       <img
-                           src={`http://localhost:1337${user.avatarUrl}`}
-                           alt={`${user.username} avatar`}
-                       />
-                   ) : (
-                       <IoPersonCircleOutline />
-                   )}
-                   <UploadAvatar
-                       token={token}
-                       userId={user.id}
-                       username={user.username}
-                       email={user.email}
-                       job={user.job}
-                       avatarUrl={user.avatarUrl}
-                       setisUserUpdated={setIsUserUpdated}
-                   />
-               </div>
-           </div>
-           <div className="body">
-               <p>Name: {user.username || "N/A"}</p>
-               <p>Email: {user.email || "N/A"}</p>
-               <p>Account: {user.isBlocked ? "Blocked" : "Not blocked"}</p>
-           </div>
-       </div>
-   );
-};
-
-export default UserProfile;*/
