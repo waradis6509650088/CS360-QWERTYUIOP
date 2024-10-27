@@ -2,6 +2,7 @@ import React, {useState, useEffect} from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import {Button, Form, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader} from "reactstrap";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) => {
     const [modal, setModal] = useState(false);
@@ -79,12 +80,12 @@ const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) 
     }, []);
 
     return ( 
-    <div>
+    <div className="Change-picture mt-2 ml-6 ">
         {isClient && (
-            <Button size="sm" onClick={toggle}>
+            <Button size="sm" onClick={toggle} style={{ backgroundColor:'#e27d60', color: 'white', border: 'none'}}>
                 {`${avatarUrl ? "Change" : "Upload"} picture`}
             </Button>
-        )}
+        )}  
             <Modal isOpen={modal} toggle={toggle}>
                 <ModalHeader toggle={toggle}>{`${avatarUrl ? "Change" : "Upload"} your picture`} </ModalHeader>
                 <ModalBody>
@@ -100,11 +101,11 @@ const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) 
                         </FormGroup>
                     </Form>
                 </ModalBody>
-                <ModalFooter>
-                    <Button color="primary" onClick={handleSubmit}>
+                <ModalFooter >
+                    <Button onClick={handleSubmit}>
                         Upload
                     </Button>{" "}
-                    <Button color="secondary" onClick={toggle}>
+                    <Button onClick={toggle}>
                         Cancel
                     </Button>
                 </ModalFooter>
