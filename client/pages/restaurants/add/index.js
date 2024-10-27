@@ -60,18 +60,34 @@ const AddRestaurants = ({
         }
     );
 
-    const handleImageUpload = (e) => {
-        //e is image file
-        setImage(e.target.files[0]);
+    const imageUpload = async () => {
+        try{
+            const form = new FormData();
+            form.append('image',image);
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`,{
+                method: 'post',
+                body: form
+            });
+            console.log(res);
+        }
+        catch(err){
+            console.error(err);
+        }
     };
 
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if(image == null){
+            alert('please add at least 1 image of your restaurant');
+            return;
+        }
+        const imageId = await imageUpload();
+        return;
         const postData = {
             "data":{
                 "name":restaurantName,
-                "slug":slugify(restaurantName),
+                "slug":slugify(restaurantName.toLowerCase()),
                 "price":priceRange,
                 "category":foodCategory,
                 "place": 1,
@@ -270,7 +286,7 @@ const AddRestaurants = ({
             /> 
             </div>
             <br/>
-            <label className="ml-1 text-1xl">Contacts</label>
+            <label className="ml-1 text-1xl">Social media</label>
             <div className="grid md:grid-cols-2 md:gap-3">
             <input
                 type="text"
@@ -306,8 +322,7 @@ const AddRestaurants = ({
                     id="dropzone-file"
                     type="file"
                     className="hidden"
-                    onChange={()=>{handleImageUpload}}
-                    required
+                    onChange={(e)=>{setImage(e.target.files[0])}}
                 />
                 </label>
             </div> 
