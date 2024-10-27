@@ -9,7 +9,7 @@ import Container from '../../../components/shared/Container';
 import Header from '../../../components/shared/Header';
 import { getData, getRestaurants, getStrapiURL } from '../../../utils';
 import { getLocalizedParams } from '../../../utils/localize';
-
+import { findImgIdByName, imageUpload, createImgIdArray, postRestaurant } from './submit.js'
 import slugify from 'slugify';
 
 const AddRestaurants = ({
@@ -60,32 +60,20 @@ const AddRestaurants = ({
         }
     );
 
-    const imageUpload = async () => {
-        try{
-            const form = new FormData();
-            form.append('image',image);
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`,{
-                method: 'post',
-                body: form
-            });
-            console.log(res);
-        }
-        catch(err){
-            console.error(err);
-        }
-    };
-
-
+    // need perm restaurant/create, upload/upload, upload/find
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if(image == null){
+        console.log(image);
+        if(image.length == null){
             alert('please add at least 1 image of your restaurant');
             return;
         }
-        const imageId = await imageUpload();
-        return;
+        const imageNames = await imageUpload(image);
+        const imgIdArray = await createImgIdArray(imageNames);
+        // form request json
         const postData = {
             "data":{
+                "images": imgIdArray,
                 "name":restaurantName,
                 "slug":slugify(restaurantName.toLowerCase()),
                 "price":priceRange,
@@ -127,27 +115,7 @@ const AddRestaurants = ({
             }
         }
 
-        console.log(JSON.stringify(postData,null,2));
-
-        try{
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/restaurants`,{
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(postData)
-            });
-            
-            const data = await res.json();
-            if(!res.ok){
-                console.error(data.error?.message || data.message || 'post failed');
-            }
-            else{
-                console.log('post success');
-            }
-        }
-        catch(err){
-            console.error(err);
-        }
-
+        await postRestaurant(postData);
     };
 
     return (
@@ -322,7 +290,7 @@ const AddRestaurants = ({
                     id="dropzone-file"
                     type="file"
                     className="hidden"
-                    onChange={(e)=>{setImage(e.target.files[0])}}
+                    onChange={(e)=>{setImage(e.target.files)}}
                 />
                 </label>
             </div> 
