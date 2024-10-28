@@ -11,6 +11,7 @@ import { getData, getRestaurants, getStrapiURL } from '../../../utils';
 import { getLocalizedParams } from '../../../utils/localize';
 import { findImgIdByName, imageUpload, createImgIdArray, postRestaurant } from './submit.js'
 import slugify from 'slugify';
+import Router from 'next/router'
 
 const AddRestaurants = ({
     global,
@@ -60,63 +61,73 @@ const AddRestaurants = ({
         }
     );
 
-    // need perm restaurant/create, upload/upload, upload/find
-    // TODO: display checkmark after file was uploaded; enable user to upload up to 5 images; add landing page after the form was submitted;
+    // need permission restaurant/create, upload/upload, upload/find
+    // TODO: 
+    // - display checkmark on upload field after file was uploaded; 
+    // - enable user to upload up to 5 images; 
+    // - add landing page after the form was submitted;
+    // - enable user to add more opening times;
+    // - enable user to add more social medias;
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log(image);
-        if(image.length == null){
-            alert('please add at least 1 image of your restaurant');
-            return;
-        }
-        const imageNames = await imageUpload(image);
-        const imgIdArray = await createImgIdArray(imageNames);
-        // form request json
-        const postData = {
-            "data":{
-                "images": imgIdArray,
-                "name":restaurantName,
-                "slug":slugify(restaurantName.toLowerCase()),
-                "price":priceRange,
-                "category":foodCategory,
-                "place": 1,
-                "information":{
-                    "description": restaurantDesc,
-                    "opening_hours":[
+        try{
+            if(image.length == null){
+                alert('please add at least 1 image of your restaurant');
+                return;
+            }
+            const imageNames = await imageUpload(image,slugify(restaurantName.toLowerCase()));
+            const imgIdArray = await createImgIdArray(imageNames);
+            // form request json
+            const postData = {
+                "data":{
+                    "images": imgIdArray,
+                    "name":restaurantName,
+                    "slug":slugify(restaurantName.toLowerCase()),
+                    "price":priceRange,
+                    "category":foodCategory,
+                    "place": 1,
+                    "information":{
+                        "description": restaurantDesc,
+                        "opening_hours":[
+                            {
+                                "day_interval":openDay,
+                                "opening_hour":openHour,
+                                "closing_hour":closeHour
+                            }
+                        ],
+                        "location":{
+                            "address":resAddress,
+                            "website":resWebsite,
+                            "phone":resPhone
+                        }
+                    },
+                    "socialNetworks":[
                         {
-                            "day_interval":openDay,
-                            "opening_hour":openHour,
-                            "closing_hour":closeHour
+                            "platform":"Instagram",
+                            "url":instagram
+                        },
+                        {
+                            "platform":"Facebook",
+                            "url":facebook
                         }
                     ],
-                    "location":{
-                        "address":resAddress,
-                        "website":resWebsite,
-                        "phone":resPhone
+                    "blocks":[
+                    ],
+                    "seo":{
+                        "metaTitle": restaurantName,
+                        "metaDescription": restaurantDesc
                     }
-                },
-                "socialNetworks":[
-                    {
-                        "platform":"Instagram",
-                        "url":instagram
-                    },
-                    {
-                        "platform":"Facebook",
-                        "url":facebook
-                    }
-                ],
-                "blocks":[
-                ],
-                "seo":{
-                    "metaTitle": restaurantName,
-                    "metaDescription": restaurantDesc
+
+
                 }
-
-
             }
-        }
+            await postRestaurant(postData);
+            Router.push('/restaurants/');
 
-        await postRestaurant(postData);
+        }
+        catch(err){
+            alert(err.message);
+        }
     };
 
     return (

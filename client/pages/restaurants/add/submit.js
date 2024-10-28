@@ -10,7 +10,7 @@ const findImgIdByName = async (name) => {
     const data = await res.json();
     if(!res.ok){
         console.log(res.message);
-        throw new Error('Error occur while fetching image.');
+        throw new Error('Error occur while finding image.');
         return;
     }
     console.log(await data);
@@ -21,10 +21,12 @@ const createImgIdArray = async (array) => {
     for(name in array){
         ids.push(await findImgIdByName(array[name]));
     }
+    if(ids.length == 0){ throw new Error('no image id found'); };
     return ids;
 }
-const imageUpload = async (image) => {
+const imageUpload = async (image,restaurantName) => {
     const imageNames = []
+    if(image.length == 0){ throw new Error('no image uploaded.'); };
     try{
         const form = new FormData();
         for(let i = 0; i < image.length && i < 5; i++){
@@ -41,14 +43,56 @@ const imageUpload = async (image) => {
             },
             body: form
         });
+        if(!res.ok){
+            throw new Error('Error occur while uploading images.');
+            return;
+        }
         return imageNames
     }
     catch(err){
-        console.error(err);
+        throw new Error(err.message);
     }
 };
 //post to restaurant api
 const postRestaurant = async (postData) => {
+    if (!postData.data.name) {
+        throw new Error('missing request data "name".');
+    }
+    if (!postData.data.price) {
+        throw new Error('missing request data "price".');
+    }
+    if (!postData.data.category) {
+        throw new Error('missing request data "category".');
+    }
+    if (!postData.data.place) {
+        throw new Error('missing request data "place".');
+    }
+    if (!postData.data.information) {
+        throw new Error('missing request data "information".');
+    }
+    if (!postData.data.information.description) {
+        throw new Error('missing request data "information.description".');
+    }
+    if (!postData.data.information.opening_hours || postData.data.information.opening_hours.length === 0) {
+        throw new Error('missing request data "information.opening_hours".');
+    }
+    if (!postData.data.information.location) {
+        throw new Error('missing request data "information.location".');
+    }
+    if (!postData.data.information.location.address) {
+        throw new Error('missing request data "information.location.address".');
+    }
+    if (!postData.data.information.location.website) {
+        throw new Error('missing request data "information.location.website".');
+    }
+    if (!postData.data.information.location.phone) {
+        throw new Error('missing request data "information.location.phone".');
+    }
+    if (!postData.data.socialNetworks || postData.data.socialNetworks.length === 0) {
+        throw new Error('missing request data "socialNetworks".');
+    }
+
+    // call add restaurant api
     try{
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/restaurants`,{
             method: 'POST',
@@ -62,15 +106,12 @@ const postRestaurant = async (postData) => {
         const data = await res.json();
         if(!res.ok){
             console.error(data.error?.message || data.message || 'post failed');
-            alert(`error: ${data.error.message}`);
+            throw new Error(data.error.message);
         }
-        else{
-            console.log(res);
-            console.log('post success');
-        }
+        alert('Restaurant added!');
     }
     catch(err){
-        console.error(err);
+        throw new Error(err.message);
     }
 }
 
