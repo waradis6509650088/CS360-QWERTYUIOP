@@ -507,3 +507,416 @@ chmod +x YOUR_BASH_SCRIPT_FILE
 ```
 
 ![Screenshot 2024-09-24 163409](https://github.com/user-attachments/assets/b17ef25c-fe2f-4094-85b5-000cce77acc2)
+
+
+## Unit and Integration Testing Overview
+
+ในโปรเจกต์นี้เราใช้เครื่องมือต่างๆ สำหรับการทดสอบดังนี้:
+
+- **Jest**: เป็น Testing Framework หลักสำหรับ Unit Tests
+- **Supertest**: ใช้สำหรับทดสอบ HTTP endpoints ใน Integration Tests
+- **Strapi Testing Utils**: ใช้สำหรับจำลอง Strapi instance ในการทดสอบ
+
+## Setting Up Tests
+
+```bash
+npm install -g yarn
+```
+
+```
+cd /CS360-QWERTYUIOP/api
+```
+
+```bash
+yarn global add jest
+yarn add @babel/runtime
+yarn && yarn seed
+```
+
+```
+cd /CS360-QWERTYUIOP/client
+```
+
+```bash
+yarn
+```
+
+## Running Tests
+
+รันคำสั่งต่อไปนี้เพื่อทดสอบ:
+
+```
+cd /CS360-QWERTYUIOP/api
+```
+
+```bash
+# รันทุก test
+yarn test
+
+# รันเฉพาะ unit tests
+yarn test:unit
+
+# รันเฉพาะ integration tests
+yarn test:integration
+
+# รัน tests แบบ watch mode
+yarn test:watch
+
+# รัน tests พร้อมรายงาน coverage
+yarn test:coverage
+```
+
+## Test File Structure
+
+```
+api/
+├── __tests__/
+│   ├── unit/
+│   │   └── auth.test.js       # Unit tests 
+│   └── integration/
+│       └── auth.integration.test.js  # Integration tests 
+```
+
+## Test Coverage
+
+### 1. Unit Tests (auth.test.js)
+
+#### Login Function
+- **Successful Login Test**
+
+```6:16:api/__tests__/unit/auth.test.js
+    it('should successfully login with valid credentials', async () => {
+      // กรณีทดสอบการเข้าสู่ระบบด้วยข้อมูลประจำตัวที่ถูกต้อง
+  describe('Login Function', () => {
+      // สร้าง mock response จำลองการตอบกลับจากเซิร์ฟเวอร์ที่มี JWT และข้อมูลผู้ใช้
+      const mockResponse = {
+        jwt: 'mock-token',
+        user: {
+          id: 1,
+          username: 'testuser',
+          email: 'test@example.com'
+        }
+```
+
+ครอบคลุม:
+- การส่งคำขอ POST ไปยัง `/api/auth/local`
+- การตรวจสอบ JWT token ที่ได้รับ
+- การตรวจสอบข้อมูลผู้ใช้ที่ได้รับกลับมา
+
+#### Registration Function
+- **Registration Within Timeout**
+
+```134:144:api/__tests__/unit/auth.test.js
+      // เรียกใช้ฟังก์ชัน register ด้วยข้อมูลผู้ใช้ใหม่
+      const result = await register('newuser', 'newuser@example.com', 'password123');
+      const endTime = Date.now(); // บันทึกเวลาที่สิ้นสุดการทดสอบ
+      const executionTime = endTime - startTime; // คำนวณเวลาที่ใช้ในการทดสอบ
+
+      // ตรวจสอบว่าเวลาที่ใช้ในการลงทะเบียนไม่เกินเวลาจำกัด
+      expect(executionTime).toBeLessThan(timeout);
+      // ตรวจสอบว่า JWT ที่ได้รับตรงกับที่คาดหวัง
+      expect(result.jwt).toBe('new-user-token');
+      // ตรวจสอบว่า username ของผู้ใช้ตรงกับที่คาดหวัง
+      expect(result.user.username).toBe('newuser');
+```
+
+ครอบคลุม:
+- การส่งคำขอลงทะเบียนไปยัง `/api/auth/local/register`
+- การตรวจสอบประสิทธิภาพ (performance) ของการลงทะเบียน
+- การตรวจสอบ JWT token และข้อมูลผู้ใช้ที่สร้างใหม่
+
+### 2. Integration Tests (auth.integration.test.js)
+
+#### Authentication Setup
+
+```9:31:api/__tests__/integration/auth.integration.test.js
+  beforeAll(async () => {
+    // เริ่มต้น Strapi และเซิร์ฟเวอร์สำหรับการทดสอบ
+    strapi = await Strapi().load();
+    await strapi.start();
+    request = supertest(strapi.server.httpServer);
+    request = supertest(strapi.server.httpServer);
+    // ดึงข้อมูล Role 'Authenticated'
+    authRole = await strapi.query('plugin::users-permissions.role').findOne({
+      where: { type: 'authenticated' },
+    });
+    });
+    // สร้าง public test user
+    await strapi.plugins['users-permissions'].services.user.add({
+      username: 'testuser',
+      email: 'test@example.com',
+      password: 'Password123!',
+      job: 'Customer',
+      role: authRole.id,
+      confirmed: true,
+      provider: 'local',
+      blocked: false,
+    });
+  }, 30000);
+```
+
+ครอบคลุม:
+- การเริ่มต้น Strapi server
+- การสร้าง test user
+- การกำหนดค่า roles และ permissions
+
+#### Login Endpoint Tests
+
+```45:68:api/__tests__/integration/auth.integration.test.js
+  describe('POST /api/auth/local', () => {
+    it('should login successfully with valid credentials', async () => {
+      // ทดสอบการเข้าสู่ระบบด้วยข้อมูลที่ถูกต้อง
+      const response = await request.post('/api/auth/local').send({
+        identifier: 'test@example.com',
+        password: 'Password123!',
+      });
+      });
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('jwt');
+      expect(response.body).toHaveProperty('user');
+    });
+    });
+    it('should fail login with invalid credentials', async () => {
+      // ทดสอบการเข้าสู่ระบบด้วยข้อมูลที่ไม่ถูกต้อง
+      const response = await request.post('/api/auth/local').send({
+        identifier: 'wrong@email.com',
+        password: 'wrongpassword',
+      });
+      });
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
+    });
+    });
+```
+
+ครอบคลุม:
+- การทดสอบ endpoint `/api/auth/local`
+- การเข้าสู่ระบบด้วยข้อมูลที่ถูกต้อง
+- การจัดการข้อผิดพลาดเมื่อข้อมูลไม่ถูกต้อง
+
+#### Registration Endpoint Tests
+
+```70:142:api/__tests__/integration/auth.integration.test.js
+  describe('POST /api/auth/local/register', () => {
+    beforeEach(async () => {
+      // สร้างผู้ใช้ที่มีอยู่แล้วสำหรับการทดสอบการลงทะเบียนซ้ำ
+      await strapi.plugins['users-permissions'].services.user.add({
+        username: 'existinguser',
+        email: 'existing@example.com',
+        password: 'Password123!',
+        job: 'Customer',
+        role: authRole.id,
+        confirmed: true,
+        provider: 'local',
+        blocked: false,
+      });
+    });
+        blocked: false,
+    afterEach(async () => {
+      // ลบผู้ใช้ที่สร้างใน beforeEach และผู้ใช้ที่ลงทะเบียนใหม่
+      await strapi.db.query('plugin::users-permissions.user').deleteMany({
+        where: { email: 'existing@example.com' },
+      });
+      await strapi.db.query('plugin::users-permissions.user').deleteMany({
+      await strapi.db.query('plugin::users-permissions.user').deleteMany({
+        where: {
+          email: {
+            $in: ['newuser@example.com'],
+          },
+        },
+      });
+    });
+        },
+    it('should successfully register a new user', async () => {
+      // ทดสอบการลงทะเบียนผู้ใช้ใหม่
+      const newUser = {
+        username: 'newuser',
+        email: 'newuser@example.com',
+        password: 'Password123!',
+        job: 'Customer',
+      };
+        password: 'Password123!',
+      const response = await request.post('/api/auth/local/register').send(newUser);
+      };
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('jwt');
+      expect(response.body.user).toHaveProperty('username', newUser.username);
+    });
+      expect(response.body).toHaveProperty('jwt');
+    it('should fail registration with existing email', async () => {
+      // ทดสอบการลงทะเบียนด้วยอีเมลที่มีอยู่แล้ว
+      const existingUser = {
+        username: 'anotheruser',
+        email: 'existing@example.com', // ใช้อีเมลที่สร้างใน beforeEach
+        password: 'Password123!',
+        job: 'Customer',
+      };
+        username: 'anotheruser',
+      const response = await request.post('/api/auth/local/register').send(existingUser);
+        password: 'Password123!',
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error');
+    });
+      const response = await request.post('/api/auth/local/register').send(existingUser);
+    it('should validate required fields', async () => {
+      // ทดสอบการตรวจสอบข้อมูลที่จำเป็น (เช่น email และ password ขาดหาย)
+      const invalidUser = {
+        username: 'testuser',
+        // ขาดข้อมูลที่จำเป็น เช่น email และ password
+      };
+      // ทดสอบการตรวจสอบข้อมูลที่จำเป็น (เช่น email และ password ขาดหาย)
+      const response = await request.post('/api/auth/local/register').send(invalidUser);
+        username: 'testuser',
+      expect(response.status).toBe(400);
+      expect(response.body.error).toBeDefined();
+    });
+```
+
+ครอบคลุม:
+- การทดสอบ endpoint `/api/auth/local/register`
+- การลงทะเบียนผู้ใช้ใหม่
+- การตรวจสอบอีเมลซ้ำ
+- การตรวจสอบข้อมูลที่จำเป็น (required fields)
+
+## Viewing Test Results
+
+1. **Console Output**: เมื่อรัน tests จะแสดงผลลัพธ์ใน terminal:
+   - ✓ สำหรับ tests ที่ผ่าน
+   - ✕ สำหรับ tests ที่ไม่ผ่าน
+   - รายละเอียดข้อผิดพลาดสำหรับ tests ที่ไม่ผ่าน
+
+2. **Coverage Report**: รัน `npm run test:coverage` เพื่อดูรายงาน coverage ที่แสดง:
+   - Statement coverage
+   - Branch coverage
+   - Function coverage
+   - Line coverage
+
+```result
+Auth Unit Tests
+    Login Function                                                                                                                                            
+      √ should successfully login with valid credentials (3 ms)                                                                                               
+      √ should handle login failure with invalid credentials (15 ms)                                                                                          
+    Register Function                                                                                                                                         
+      √ should successfully register a new user within timeout (1 ms)                                                                                         
+      √ should handle registration failure with duplicate email (1 ms)
+
+  Auth Integration Tests
+    POST /api/auth/local                                                                                                                                      
+      √ should login successfully with valid credentials (111 ms)                                                                                             
+      √ should fail login with invalid credentials (16 ms)                                                                                                    
+    POST /api/auth/local/register                                                                                                                             
+      √ should successfully register a new user (170 ms)                                                                                                      
+      √ should fail registration with existing email (83 ms)                                                                                                  
+      √ should validate required fields (86 ms)      
+
+-------------------------------------|---------|----------|---------|---------|-------------------                                                            
+File                                 | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                             
+-------------------------------------|---------|----------|---------|---------|-------------------                                                            
+All files                            |   89.87 |    33.33 |   85.71 |   89.47 |                                                                               
+ config                              |     100 |       50 |     100 |     100 |                                                                               
+  admin.js                           |     100 |      100 |     100 |     100 |                                                                               
+  api.js                             |     100 |      100 |     100 |     100 |                   
+  cron-tasks.js                      |     100 |      100 |     100 |     100 | 
+  database.js                        |     100 |       50 |     100 |     100 | 15-40
+  middlewares.js                     |     100 |      100 |     100 |     100 | 
+  plugins.js                         |     100 |      100 |     100 |     100 | 
+  server.js                          |     100 |      100 |     100 |     100 | 
+ src                                 |     100 |      100 |     100 |     100 | 
+  index.js                           |     100 |      100 |     100 |     100 | 
+ src/api/article/controllers         |     100 |      100 |     100 |     100 | 
+  article.js                         |     100 |      100 |     100 |     100 | 
+ src/api/article/routes              |     100 |      100 |     100 |     100 | 
+  article.js                         |     100 |      100 |     100 |     100 | 
+ src/api/article/services            |     100 |      100 |     100 |     100 | 
+  article.js                         |     100 |      100 |     100 |     100 | 
+ src/api/blog-page/controllers       |     100 |      100 |     100 |     100 | 
+  blog-page.js                       |     100 |      100 |     100 |     100 | 
+ src/api/blog-page/routes            |     100 |      100 |     100 |     100 | 
+  blog-page.js                       |     100 |      100 |     100 |     100 | 
+ src/api/blog-page/services          |     100 |      100 |     100 |     100 | 
+  blog-page.js                       |     100 |      100 |     100 |     100 | 
+ src/api/category/controllers        |     100 |      100 |     100 |     100 | 
+  category.js                        |     100 |      100 |     100 |     100 | 
+ src/api/category/routes             |     100 |      100 |     100 |     100 | 
+  category.js                        |     100 |      100 |     100 |     100 | 
+ src/api/category/services           |     100 |      100 |     100 |     100 | 
+  category.js                        |     100 |      100 |     100 |     100 | 
+ src/api/global/controllers          |     100 |      100 |     100 |     100 | 
+  global.js                          |     100 |      100 |     100 |     100 | 
+ src/api/global/routes               |     100 |      100 |     100 |     100 | 
+  global.js                          |     100 |      100 |     100 |     100 | 
+ src/api/global/services             |     100 |      100 |     100 |     100 | 
+  global.js                          |     100 |      100 |     100 |     100 | 
+ src/api/page/controllers            |     100 |      100 |     100 |     100 | 
+  page.js                            |     100 |      100 |     100 |     100 | 
+ src/api/page/routes                 |     100 |      100 |     100 |     100 | 
+  page.js                            |     100 |      100 |     100 |     100 | 
+ src/api/page/services               |     100 |      100 |     100 |     100 | 
+  page.js                            |     100 |      100 |     100 |     100 | 
+ src/api/place/controllers           |     100 |      100 |     100 |     100 | 
+  place.js                           |     100 |      100 |     100 |     100 | 
+ src/api/place/routes                |     100 |      100 |     100 |     100 | 
+  place.js                           |     100 |      100 |     100 |     100 | 
+ src/api/place/services              |     100 |      100 |     100 |     100 | 
+  place.js                           |     100 |      100 |     100 |     100 | 
+ src/api/restaurant-page/controllers |     100 |      100 |     100 |     100 | 
+  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
+ src/api/restaurant-page/routes      |     100 |      100 |     100 |     100 | 
+  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
+ src/api/restaurant-page/services    |     100 |      100 |     100 |     100 | 
+  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
+ src/api/restaurant/controllers      |     100 |      100 |     100 |     100 | 
+  restaurant.js                      |     100 |      100 |     100 |     100 | 
+ src/api/restaurant/routes           |     100 |      100 |     100 |     100 | 
+  restaurant.js                      |     100 |      100 |     100 |     100 | 
+ src/api/restaurant/services         |     100 |      100 |     100 |     100 | 
+  restaurant.js                      |     100 |      100 |     100 |     100 | 
+ src/api/review/controllers          |     100 |      100 |     100 |     100 | 
+  review.js                          |     100 |      100 |     100 |     100 | 
+ src/api/review/routes               |     100 |      100 |     100 |     100 | 
+  review.js                          |     100 |      100 |     100 |     100 | 
+ src/api/review/services             |     100 |      100 |     100 |     100 | 
+  review.js                          |     100 |      100 |     100 |     100 | 
+ src/policies                        |   11.11 |        0 |       0 |   11.11 | 
+  auth.js                            |   11.11 |        0 |       0 |   11.11 | 2-13
+-------------------------------------|---------|----------|---------|---------|-------------------
+
+Test Suites: 2 passed, 2 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        7.714 s, estimated 25 s
+Ran all test suites.
+Done in 8.40s.
+```
+
+## Adding New Tests
+
+1. **Unit Tests**:
+   - สร้างไฟล์ใหม่ใน `api/__tests__/unit/`
+   - ใช้รูปแบบการตั้งชื่อ `[feature].test.js`
+   - ใช้ Jest syntax ในการเขียน tests:
+
+```javascript
+describe('Feature Name', () => {
+  it('should do something specific', () => {
+    // Test implementation
+  });
+});
+```
+
+2. **Integration Tests**:
+   - สร้างไฟล์ใหม่ใน `api/__tests__/integration/`
+   - ใช้รูปแบบการตั้งชื่อ `[feature].integration.test.js`
+   - ใช้ Supertest สำหรับทดสอบ endpoints:
+
+```javascript
+describe('API Endpoint', () => {
+  it('should handle request correctly', async () => {
+    const response = await request(app)
+      .post('/api/endpoint')
+      .send(data);
+    
+    expect(response.status).toBe(200);
+  });
+});
+```
