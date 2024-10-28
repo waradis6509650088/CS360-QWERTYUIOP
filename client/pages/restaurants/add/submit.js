@@ -10,7 +10,7 @@ const findImgIdByName = async (name) => {
     const data = await res.json();
     if(!res.ok){
         console.log(res.message);
-        throw new Error('Error occur while finding image.');
+        throw new Error(data.error.message);
         return;
     }
     console.log(await data);

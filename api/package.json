@@ -12,8 +12,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:unit": "jest __tests__/unit",
-    "test:integration": "jest __tests__/integration"
+    "test:unit": "jest __tests__/unit/*",
+    "test:integration": "jest __tests__/integration/*"
   },
   "dependencies": {
     "@ckeditor/strapi-plugin-ckeditor": "^0.0.7",
