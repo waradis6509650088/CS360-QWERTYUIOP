@@ -61,6 +61,7 @@ const AddRestaurants = ({
     );
 
     // need perm restaurant/create, upload/upload, upload/find
+    // TODO: display checkmark after file was uploaded; enable user to upload up to 5 images; add landing page after the form was submitted;
     const handleSubmit = async (e) => {
         e.preventDefault();
         console.log(image);
