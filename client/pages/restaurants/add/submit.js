@@ -29,15 +29,16 @@ const createImgIdArray = async (array) => {
         }
     }
     catch(err){
-        throw new Error(err);
+        throw new Error(err.message);
     }
     return ids;
 }
 
-const imageUpload = async (image,restaurantName) => {
+const imageUpload = async (image, restaurantName) => {
+    // image is html file input array
     const imageNames = []
-    if(image.length == 0){ throw new Error('no image uploaded.'); };
     try{
+        if(image.length == 0){ throw new Error('no image uploaded.'); };
         const form = new FormData();
         for(let i = 0; i < image.length && i < 5; i++){
             const randomStr = randomBytes(10).toString('hex');
@@ -55,11 +56,11 @@ const imageUpload = async (image,restaurantName) => {
         });
         if(!res.ok){
             throw new Error('Error occur while uploading images.');
-            return;
         }
         return imageNames
     }
     catch(err){
+        console.log(err.message);
         throw new Error(err.message);
     }
 };

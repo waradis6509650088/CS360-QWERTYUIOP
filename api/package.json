@@ -13,7 +13,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest __tests__/*/* --coverage",
     "test:unit": "jest __tests__/unit/* ",
-    "test:unit-coverage": "jest __tests__/unit/* --coverage",
+    "test:unit-coverage": "jest __tests__/unit/* --coverage --silent=false",
     "test:integration": "jest __tests__/integration/*",
     "test:integration-coverage": "jest __tests__/integration/* --coverage"
   },
@@ -27,7 +27,9 @@
     "@strapi/strapi": "4.13.5",
     "@webbio/strapi-plugin-scheduler": "^0.1.2",
     "better-sqlite3": "^7.6.2",
+    "fetch-blob": "^4.0.0",
     "foodadvisor": "file:",
+    "form-data": "^4.0.1",
     "fs-extra": "^10.0.0",
     "strapi-plugin-populate-deep": "^1.1.2",
     "strapi-plugin-todo": "^0.0.9",
@@ -50,8 +52,8 @@
     "modulePathIgnorePatterns": [
       "<rootDir>/.cache/"
     ],
-    "collectCoverageFrom":[
-        "../client/pages/restaurants/add/*.js"
+    "collectCoverageFrom": [
+      "../client/pages/restaurants/add/*.js"
     ]
   },
   "devDependencies": {
