@@ -1,29 +1,39 @@
 import { randomBytes } from 'crypto';
 
 const findImgIdByName = async (name) => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/files?filters[name][$eq]=${escape(name)}`,{
-        'method':"GET",
-        'headers':{
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+    try{
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload/files?filters[name][$eq]=${escape(name)}`,{
+            'method':"GET",
+            'headers':{
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        })
+        if(!res.ok){
+            throw new Error(JSON.stringify(res.message));
         }
-    })
-    const data = await res.json();
-    if(!res.ok){
-        console.log(res.message);
-        throw new Error(data.error.message);
-        return;
+        const data = await res.json();
+        return data[0].id
     }
-    console.log(await data);
-    return data[0].id
+    catch(err){
+        throw new Error(err);
+    }
 }
+
 const createImgIdArray = async (array) => {
+    //array = array of unique image name on server
     const ids = [];
-    for(name in array){
-        ids.push(await findImgIdByName(array[name]));
+    try{
+        if(array.length == 0){ throw new Error('no image id found'); };
+        for(let i = 0; i < array.length; i++){
+            ids.push(await findImgIdByName(array[i]));
+        }
     }
-    if(ids.length == 0){ throw new Error('no image id found'); };
+    catch(err){
+        throw new Error(err);
+    }
     return ids;
 }
+
 const imageUpload = async (image,restaurantName) => {
     const imageNames = []
     if(image.length == 0){ throw new Error('no image uploaded.'); };

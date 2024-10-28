@@ -11,9 +11,11 @@
     "seed": "node script/seed.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:unit": "jest __tests__/unit/*",
-    "test:integration": "jest __tests__/integration/*"
+    "test:coverage": "jest __tests__/*/* --coverage",
+    "test:unit": "jest __tests__/unit/* ",
+    "test:unit-coverage": "jest __tests__/unit/* --coverage",
+    "test:integration": "jest __tests__/integration/*",
+    "test:integration-coverage": "jest __tests__/integration/* --coverage"
   },
   "dependencies": {
     "@ckeditor/strapi-plugin-ckeditor": "^0.0.7",
@@ -47,6 +49,9 @@
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [
       "<rootDir>/.cache/"
+    ],
+    "collectCoverageFrom":[
+        "../client/pages/restaurants/add/*.js"
     ]
   },
   "devDependencies": {
