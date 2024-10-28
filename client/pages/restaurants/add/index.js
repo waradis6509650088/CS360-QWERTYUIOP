@@ -61,10 +61,12 @@ const AddRestaurants = ({
         }
     );
 
-    // need permission restaurant/create, upload/upload, upload/find
+    // need permission => restaurant/create, upload/upload, upload/find
+    //
     // TODO: 
     // - display checkmark on upload field after file was uploaded; 
     // - enable user to upload up to 5 images; 
+    // - display preview of uploaded images;
     // - add landing page after the form was submitted;
     // - enable user to add more opening times;
     // - enable user to add more social medias;
@@ -141,7 +143,7 @@ const AddRestaurants = ({
         <br/>
         <form id="restaurantForm" onSubmit={handleSubmit}>
         <header className="block text-3xl">Add a restaurant</header>
-        <br/>
+        <hr class="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700"/>
         <div className="grid md:grid-cols-3 md:gap-6"> 
             <div>
                 <label htmlFor="restaurantName" className="ml-1 text-1xl">Name</label>
