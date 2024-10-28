@@ -511,58 +511,57 @@ chmod +x YOUR_BASH_SCRIPT_FILE
 
 ## Unit and Integration Testing Overview
 
-ในโปรเจกต์นี้เราใช้เครื่องมือต่างๆ สำหรับการทดสอบดังนี้:
+In this project, we use the following testing tools:
 
-- **Jest**: เป็น Testing Framework หลักสำหรับ Unit Tests
-- **Supertest**: ใช้สำหรับทดสอบ HTTP endpoints ใน Integration Tests
-- **Strapi Testing Utils**: ใช้สำหรับจำลอง Strapi instance ในการทดสอบ
+- **Jest**: Primary Testing Framework for Unit Tests
+- **Supertest**: For testing HTTP endpoints in Integration Tests
+- **Strapi Testing Utils**: For simulating Strapi instance in tests
 
 ## Setting Up Tests
 
+Run these commands to set up the testing environment:
+
 ```bash
+# Install Yarn globally
 npm install -g yarn
 ```
 
-```
-cd /CS360-QWERTYUIOP/api
-```
-
 ```bash
+# Setup API tests
+cd /CS360-QWERTYUIOP/api
 yarn global add jest
 yarn add @babel/runtime
 yarn && yarn seed
 ```
 
-```
-cd /CS360-QWERTYUIOP/client
-```
-
 ```bash
+# Setup Client tests
+cd /CS360-QWERTYUIOP/client
 yarn
 ```
 
 ## Running Tests
 
-รันคำสั่งต่อไปนี้เพื่อทดสอบ:
+Execute the following commands to run tests:
 
-```
+```bash
 cd /CS360-QWERTYUIOP/api
 ```
 
 ```bash
-# รันทุก test
+# Run all tests
 yarn test
 
-# รันเฉพาะ unit tests
+# Run only unit tests
 yarn test:unit
 
-# รันเฉพาะ integration tests
+# Run only integration tests
 yarn test:integration
 
-# รัน tests แบบ watch mode
+# Run tests in watch mode
 yarn test:watch
 
-# รัน tests พร้อมรายงาน coverage
+# Run tests with coverage report
 yarn test:coverage
 ```
 
@@ -582,216 +581,123 @@ api/
 ### 1. Unit Tests (auth.test.js)
 
 #### Login Function
-- **Successful Login Test**
-
-```6:16:api/__tests__/unit/auth.test.js
-    it('should successfully login with valid credentials', async () => {
-      // กรณีทดสอบการเข้าสู่ระบบด้วยข้อมูลประจำตัวที่ถูกต้อง
-  describe('Login Function', () => {
-      // สร้าง mock response จำลองการตอบกลับจากเซิร์ฟเวอร์ที่มี JWT และข้อมูลผู้ใช้
-      const mockResponse = {
-        jwt: 'mock-token',
-        user: {
-          id: 1,
-          username: 'testuser',
-          email: 'test@example.com'
-        }
+```javascript
+describe('Login Function', () => {
+  it('should successfully login with valid credentials', async () => {
+    // Mock server response with JWT and user data
+    const mockResponse = {
+      jwt: 'mock-token',
+      user: {
+        id: 1,
+        username: 'testuser',
+        email: 'test@example.com'
+      }
+    };
+    // Test implementation
+  });
+});
 ```
 
-ครอบคลุม:
-- การส่งคำขอ POST ไปยัง `/api/auth/local`
-- การตรวจสอบ JWT token ที่ได้รับ
-- การตรวจสอบข้อมูลผู้ใช้ที่ได้รับกลับมา
+Coverage includes:
+- POST request to `/api/auth/local`
+- JWT token validation
+- User data validation
 
 #### Registration Function
-- **Registration Within Timeout**
+```javascript
+it('should register within timeout', async () => {
+  const startTime = Date.now();
+  const result = await register('newuser', 'newuser@example.com', 'password123');
+  const endTime = Date.now();
+  const executionTime = endTime - startTime;
 
-```134:144:api/__tests__/unit/auth.test.js
-      // เรียกใช้ฟังก์ชัน register ด้วยข้อมูลผู้ใช้ใหม่
-      const result = await register('newuser', 'newuser@example.com', 'password123');
-      const endTime = Date.now(); // บันทึกเวลาที่สิ้นสุดการทดสอบ
-      const executionTime = endTime - startTime; // คำนวณเวลาที่ใช้ในการทดสอบ
-
-      // ตรวจสอบว่าเวลาที่ใช้ในการลงทะเบียนไม่เกินเวลาจำกัด
-      expect(executionTime).toBeLessThan(timeout);
-      // ตรวจสอบว่า JWT ที่ได้รับตรงกับที่คาดหวัง
-      expect(result.jwt).toBe('new-user-token');
-      // ตรวจสอบว่า username ของผู้ใช้ตรงกับที่คาดหวัง
-      expect(result.user.username).toBe('newuser');
+  expect(executionTime).toBeLessThan(timeout);
+  expect(result.jwt).toBe('new-user-token');
+  expect(result.user.username).toBe('newuser');
+});
 ```
 
-ครอบคลุม:
-- การส่งคำขอลงทะเบียนไปยัง `/api/auth/local/register`
-- การตรวจสอบประสิทธิภาพ (performance) ของการลงทะเบียน
-- การตรวจสอบ JWT token และข้อมูลผู้ใช้ที่สร้างใหม่
+Coverage includes:
+- Registration request to `/api/auth/local/register`
+- Performance testing of registration process
+- Validation of JWT token and new user data
 
 ### 2. Integration Tests (auth.integration.test.js)
 
 #### Authentication Setup
+```javascript
+beforeAll(async () => {
+  strapi = await Strapi().load();
+  await strapi.start();
+  request = supertest(strapi.server.httpServer);
+  
+  // Get Authenticated role
+  authRole = await strapi.query('plugin::users-permissions.role').findOne({
+    where: { type: 'authenticated' },
+  });
 
-```9:31:api/__tests__/integration/auth.integration.test.js
-  beforeAll(async () => {
-    // เริ่มต้น Strapi และเซิร์ฟเวอร์สำหรับการทดสอบ
-    strapi = await Strapi().load();
-    await strapi.start();
-    request = supertest(strapi.server.httpServer);
-    request = supertest(strapi.server.httpServer);
-    // ดึงข้อมูล Role 'Authenticated'
-    authRole = await strapi.query('plugin::users-permissions.role').findOne({
-      where: { type: 'authenticated' },
-    });
-    });
-    // สร้าง public test user
-    await strapi.plugins['users-permissions'].services.user.add({
-      username: 'testuser',
-      email: 'test@example.com',
-      password: 'Password123!',
-      job: 'Customer',
-      role: authRole.id,
-      confirmed: true,
-      provider: 'local',
-      blocked: false,
-    });
-  }, 30000);
+  // Create test user
+  await strapi.plugins['users-permissions'].services.user.add({
+    username: 'testuser',
+    email: 'test@example.com',
+    password: 'Password123!',
+    job: 'Customer',
+    role: authRole.id,
+    confirmed: true,
+    provider: 'local',
+    blocked: false,
+  });
+}, 30000);
 ```
 
-ครอบคลุม:
-- การเริ่มต้น Strapi server
-- การสร้าง test user
-- การกำหนดค่า roles และ permissions
+Coverage includes:
+- Strapi server initialization
+- Test user creation
+- Roles and permissions configuration
 
 #### Login Endpoint Tests
+```javascript
+describe('POST /api/auth/local', () => {
+  it('should login successfully with valid credentials', async () => {
+    const response = await request.post('/api/auth/local').send({
+      identifier: 'test@example.com',
+      password: 'Password123!',
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('jwt');
+    expect(response.body).toHaveProperty('user');
+  });
 
-```45:68:api/__tests__/integration/auth.integration.test.js
-  describe('POST /api/auth/local', () => {
-    it('should login successfully with valid credentials', async () => {
-      // ทดสอบการเข้าสู่ระบบด้วยข้อมูลที่ถูกต้อง
-      const response = await request.post('/api/auth/local').send({
-        identifier: 'test@example.com',
-        password: 'Password123!',
-      });
-      });
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('jwt');
-      expect(response.body).toHaveProperty('user');
+  it('should fail login with invalid credentials', async () => {
+    const response = await request.post('/api/auth/local').send({
+      identifier: 'wrong@email.com',
+      password: 'wrongpassword',
     });
-    });
-    it('should fail login with invalid credentials', async () => {
-      // ทดสอบการเข้าสู่ระบบด้วยข้อมูลที่ไม่ถูกต้อง
-      const response = await request.post('/api/auth/local').send({
-        identifier: 'wrong@email.com',
-        password: 'wrongpassword',
-      });
-      });
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error');
-    });
-    });
+    
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('error');
+  });
+});
 ```
-
-ครอบคลุม:
-- การทดสอบ endpoint `/api/auth/local`
-- การเข้าสู่ระบบด้วยข้อมูลที่ถูกต้อง
-- การจัดการข้อผิดพลาดเมื่อข้อมูลไม่ถูกต้อง
-
-#### Registration Endpoint Tests
-
-```70:142:api/__tests__/integration/auth.integration.test.js
-  describe('POST /api/auth/local/register', () => {
-    beforeEach(async () => {
-      // สร้างผู้ใช้ที่มีอยู่แล้วสำหรับการทดสอบการลงทะเบียนซ้ำ
-      await strapi.plugins['users-permissions'].services.user.add({
-        username: 'existinguser',
-        email: 'existing@example.com',
-        password: 'Password123!',
-        job: 'Customer',
-        role: authRole.id,
-        confirmed: true,
-        provider: 'local',
-        blocked: false,
-      });
-    });
-        blocked: false,
-    afterEach(async () => {
-      // ลบผู้ใช้ที่สร้างใน beforeEach และผู้ใช้ที่ลงทะเบียนใหม่
-      await strapi.db.query('plugin::users-permissions.user').deleteMany({
-        where: { email: 'existing@example.com' },
-      });
-      await strapi.db.query('plugin::users-permissions.user').deleteMany({
-      await strapi.db.query('plugin::users-permissions.user').deleteMany({
-        where: {
-          email: {
-            $in: ['newuser@example.com'],
-          },
-        },
-      });
-    });
-        },
-    it('should successfully register a new user', async () => {
-      // ทดสอบการลงทะเบียนผู้ใช้ใหม่
-      const newUser = {
-        username: 'newuser',
-        email: 'newuser@example.com',
-        password: 'Password123!',
-        job: 'Customer',
-      };
-        password: 'Password123!',
-      const response = await request.post('/api/auth/local/register').send(newUser);
-      };
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('jwt');
-      expect(response.body.user).toHaveProperty('username', newUser.username);
-    });
-      expect(response.body).toHaveProperty('jwt');
-    it('should fail registration with existing email', async () => {
-      // ทดสอบการลงทะเบียนด้วยอีเมลที่มีอยู่แล้ว
-      const existingUser = {
-        username: 'anotheruser',
-        email: 'existing@example.com', // ใช้อีเมลที่สร้างใน beforeEach
-        password: 'Password123!',
-        job: 'Customer',
-      };
-        username: 'anotheruser',
-      const response = await request.post('/api/auth/local/register').send(existingUser);
-        password: 'Password123!',
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error');
-    });
-      const response = await request.post('/api/auth/local/register').send(existingUser);
-    it('should validate required fields', async () => {
-      // ทดสอบการตรวจสอบข้อมูลที่จำเป็น (เช่น email และ password ขาดหาย)
-      const invalidUser = {
-        username: 'testuser',
-        // ขาดข้อมูลที่จำเป็น เช่น email และ password
-      };
-      // ทดสอบการตรวจสอบข้อมูลที่จำเป็น (เช่น email และ password ขาดหาย)
-      const response = await request.post('/api/auth/local/register').send(invalidUser);
-        username: 'testuser',
-      expect(response.status).toBe(400);
-      expect(response.body.error).toBeDefined();
-    });
-```
-
-ครอบคลุม:
-- การทดสอบ endpoint `/api/auth/local/register`
-- การลงทะเบียนผู้ใช้ใหม่
-- การตรวจสอบอีเมลซ้ำ
-- การตรวจสอบข้อมูลที่จำเป็น (required fields)
 
 ## Viewing Test Results
 
-1. **Console Output**: เมื่อรัน tests จะแสดงผลลัพธ์ใน terminal:
-   - ✓ สำหรับ tests ที่ผ่าน
-   - ✕ สำหรับ tests ที่ไม่ผ่าน
-   - รายละเอียดข้อผิดพลาดสำหรับ tests ที่ไม่ผ่าน
+The test results can be viewed in two ways:
 
-2. **Coverage Report**: รัน `npm run test:coverage` เพื่อดูรายงาน coverage ที่แสดง:
+1. **Console Output**: When running tests, results appear in the terminal:
+   - ✓ for passed tests
+   - ✕ for failed tests
+   - Detailed error messages for failed tests
+
+2. **Coverage Report**: Run `yarn test:coverage` to view:
    - Statement coverage
    - Branch coverage
    - Function coverage
    - Line coverage
 
-```result
+Example test result output:
+```
 Auth Unit Tests
     Login Function                                                                                                                                            
       √ should successfully login with valid credentials (3 ms)                                                                                               
@@ -886,15 +792,13 @@ Tests:       9 passed, 9 total
 Snapshots:   0 total
 Time:        7.714 s, estimated 25 s
 Ran all test suites.
-Done in 8.40s.
+Done in 8.40s.          
 ```
 
 ## Adding New Tests
 
-1. **Unit Tests**:
-   - สร้างไฟล์ใหม่ใน `api/__tests__/unit/`
-   - ใช้รูปแบบการตั้งชื่อ `[feature].test.js`
-   - ใช้ Jest syntax ในการเขียน tests:
+### 1. Unit Tests
+Create new files in `api/__tests__/unit/` following this pattern:
 
 ```javascript
 describe('Feature Name', () => {
@@ -904,10 +808,8 @@ describe('Feature Name', () => {
 });
 ```
 
-2. **Integration Tests**:
-   - สร้างไฟล์ใหม่ใน `api/__tests__/integration/`
-   - ใช้รูปแบบการตั้งชื่อ `[feature].integration.test.js`
-   - ใช้ Supertest สำหรับทดสอบ endpoints:
+### 2. Integration Tests
+Create new files in `api/__tests__/integration/` using Supertest:
 
 ```javascript
 describe('API Endpoint', () => {
