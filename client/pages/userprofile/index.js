@@ -16,7 +16,7 @@ const UserProfile = ({ token = "your token"}) => {
    
    useEffect(() => {
     const getProfileData = async () => {
-        try {
+        try {                              //http:localhost:1337/api/users/me 
             const {data} = await axios.get(`http://localhost:1337/api/users/1?populate=*`, {
                 headers: {
                     Authorization: `bearer ${token}`,
@@ -46,7 +46,7 @@ const UserProfile = ({ token = "your token"}) => {
             email: email,
             job: job,
             gender: gender,
-        };
+        };              //http:localhost:1337/api/users/me
         await axios.put(`http://localhost:1337/api/users/1`, updateInfo, {
             headers: {
                 Authorization: `Bearer ${token},`
