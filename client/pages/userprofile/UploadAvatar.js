@@ -30,7 +30,7 @@ const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) 
         try {
             await axios.put(
                 `http://localhost:1337/api/users/${userId}`,
-                {picture: avatarUrl},
+                { avatarId, avatarUrl },
                 {
                     headers: {
                         "Content-Type": "application/json",

@@ -2,16 +2,16 @@ import axios from "axios";
 import React, {useState, useEffect} from "react";
 import { IoPersonCircleOutline } from "react-icons/io5";
 import UploadAvatar from "./UploadAvatar";
-import { FormGroup, Input, Label } from "reactstrap";
+import { Button, FormGroup, Input, Label } from "reactstrap";
 
 const UserProfile = ({ token = "your token"}) => {
    const [user, setUser] = useState({});
    const [isUserUpdated , setisUserUpdated] = useState(false);
-   const [firstName, setFirstName] = useState(user.firstName || "");
-   const [lastName, setLastName] = useState(user.lastName || "");
-   const [email, setEmail] = useState(user.setEmail || "");
-   const [job, setJob] = useState(user.setJob || "");
-   const [gender, setGender] = useState(user.setGender || "");
+   const [firstName, setFirstName] = useState(user.setfirstname || "");
+   const [lastName, setLastName] = useState(user.setlastname || "");
+   const [email, setEmail] = useState(user.setemail || "");
+   const [job, setJob] = useState(user.setjob || "");
+   const [gender, setGender] = useState(user.setgender || "");
     
    
    useEffect(() => {
@@ -23,6 +23,11 @@ const UserProfile = ({ token = "your token"}) => {
                 },
             });
             setUser(data);
+            setFirstName(data.firstname || "");
+            setLastName(data.lastname || "");
+            setEmail(data.email || "");
+            setJob(data.job || "");
+            setGender(data.gender || "");
             setisUserUpdated(false);
         } catch (error){
             console.log({error});
@@ -33,7 +38,26 @@ const UserProfile = ({ token = "your token"}) => {
 
    const avatarUrl = user.picture?.url ? `http://localhost:1337${user.picture.url}` : null;
 
-   //console.log({user})   
+   const handleUpdateInfo = async () => {
+    try {
+        const updateInfo = {
+            firstname: firstName,
+            lastname: lastName,
+            email: email,
+            job: job,
+            gender: gender,
+        };
+        await axios.put(`http://localhost:1337/api/users/1`, updateInfo, {
+            headers: {
+                Authorization: `Bearer ${token},`
+            },
+        });
+        toast.success("Profile updated successfully");
+        setisUserUpdated(true);
+    } catch (error){
+        console.log({ error });
+    }
+   } 
 
    return (
     <div className="profile p-5 ml-10 mb-5 mt-2">
@@ -93,6 +117,10 @@ const UserProfile = ({ token = "your token"}) => {
                     <Input type="text" id="gender" value={gender} onChange={(e) => setGender(e.target.value)} />
                 </div>
             </FormGroup>
+
+            <Button onClick={handleUpdateInfo} style={{ backgroundColor: '#e27d60', color: 'white', border: 'none'}} className="mt-4">
+                Edit
+            </Button>
         </div>
     </div>
 
