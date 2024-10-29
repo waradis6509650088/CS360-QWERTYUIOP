@@ -113,13 +113,15 @@ describe('Add restaurant function Unit Test', () => {
         beforeAll(() => {
             class FormDataMock {
                 constructor(){
+                    this.data = []
                 }
-                append(){
-                    return;
+                append(type, file, fname){
+                    this.data.push(file);
                 }
             }
             global.FormData = FormDataMock;
             global.fetch = jest.fn((api, header) => {
+                console.log(header.body instanceof FormDataMock);
                 if(header.body[0] instanceof FormData){
                     return Promise.resolve({
                         ok: true,

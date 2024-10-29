@@ -60,7 +60,7 @@ const imageUpload = async (image, restaurantName) => {
         return imageNames
     }
     catch(err){
-        console.log(err.message);
+        //console.log(err.message);
         throw new Error(err.message);
     }
 };
@@ -116,7 +116,7 @@ const postRestaurant = async (postData) => {
 
         const data = await res.json();
         if(!res.ok){
-            console.error(data.error?.message || data.message || 'post failed');
+            //console.error(data.error?.message || data.message || 'post failed');
             throw new Error(data.error.message);
         }
         alert('Restaurant added!');
