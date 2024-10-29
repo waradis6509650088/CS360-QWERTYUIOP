@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu, debian, redhat]
-        node-version: [16.x]
+        node-version: [16.x , 14.x]
     
     runs-on: self-hosted-${{ matrix.os }}
     
