@@ -50,10 +50,14 @@
   "jest": {
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [
-      "<rootDir>/.cache/"
+      "<rootDir>/.cache/",
+      "<rootDir>/api/node_modules/",
+      "<rootDir>/client/node_modules/"
     ],
-    "collectCoverageFrom": [
-      "../client/pages/restaurants/add/*.js"
+    "rootDir": "../",
+    "roots": [
+        "<rootDir>/client/pages/",
+        "<rootDir>/api/"
     ]
   },
   "devDependencies": {
