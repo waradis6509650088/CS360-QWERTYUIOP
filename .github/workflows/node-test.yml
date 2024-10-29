@@ -2,17 +2,19 @@ name: Node.js CI
 
 on:
   push:
+    branches: [ test-feature07, test-feature08, test-feature06]
   pull_request:
     branches: [ develop, main ]
 
 jobs:
-  test:
+  tests:
     strategy:
       matrix:
-        os: [ubuntu, debian, redhat]
+        os: [ubuntu-latest, debian-latest, redhat-latest]
         node-version: [16.x]
-    
-    runs-on: self-hosted-${{ matrix.os }}
+
+    runs-on: ubuntu-latest
+    container: ${{ matrix.os }}
     
     steps:
     - uses: actions/checkout@v4
