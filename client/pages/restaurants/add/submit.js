@@ -116,12 +116,12 @@ const postRestaurant = async (postData) => {
 
         const data = await res.json();
         if(!res.ok){
-            //console.error(data.error?.message || data.message || 'post failed');
-            throw new Error(data.error.message);
+            throw new Error(`API Error:${data.error.message}`);
         }
         alert('Restaurant added!');
     }
     catch(err){
+        console.error(err.message);
         throw new Error(err.message);
     }
 }

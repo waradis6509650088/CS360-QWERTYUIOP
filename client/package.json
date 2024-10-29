@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "jest --coverage"
+    "test:unit": "jest ./__test__/unit",
+    "test:coverage": "jest --coverage --silent=false",
+    "test:integration": "jest ./__test__/integration"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^35.3.1",

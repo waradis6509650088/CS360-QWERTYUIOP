@@ -10,7 +10,7 @@ jobs:
   tests:
     strategy:
       matrix:
-        os: [ubuntu-latest, debian-latest, redhat-latest]
+        os: ['ubuntu:latest', 'debian:latest', 'redhat:latest']
         node-version: [16.x]
 
     runs-on: ubuntu-latest
