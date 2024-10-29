@@ -2,9 +2,8 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ test-feature06 ]
   pull_request:
-    branches: [ develop-feature06, develop, main ]
+    branches: [ develop, main ]
 
 jobs:
   test:
@@ -40,10 +39,14 @@ jobs:
       run: |
         yarn
     
-    - name: Run unit tests
+    - name: Run api unit tests
       working-directory: ./api
       run: yarn test:unit
+
+    - name: Run client unit tests
+      working-directory: ./client
+      run: yarn test:unit
     
-    - name: Run integration tests
-      working-directory: ./api
+    - name: Run client integration tests
+      working-directory: ./client
       run: yarn test:integration
