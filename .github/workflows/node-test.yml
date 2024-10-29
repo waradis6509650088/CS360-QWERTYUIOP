@@ -9,8 +9,9 @@ on:
 jobs:
   tests:
     strategy:
+      fail-fast: false
       matrix:
-        os: ['ubuntu:latest', 'debian:latest', 'redhat:latest']
+        os: ['ubuntu:latest', 'debian:latest', 'redhat/ubi8']
         node-version: [16.x]
 
     runs-on: ubuntu-latest
@@ -43,20 +44,14 @@ jobs:
     - name: Run api unit tests
       working-directory: ./api
       run: |
-        npm ci
-        npm run build --if-present
         yarn test:unit
 
     - name: Run client unit tests
       working-directory: ./client
       run: |
-        npm ci
-        npm run build --if-present
         yarn test:unit
     
     - name: Run client integration tests
       working-directory: ./client
       run: |
-        npm ci
-        npm run build --if-present
         yarn test:integration

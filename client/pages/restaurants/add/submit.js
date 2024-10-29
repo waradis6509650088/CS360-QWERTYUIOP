@@ -121,7 +121,7 @@ const postRestaurant = async (postData) => {
         alert('Restaurant added!');
     }
     catch(err){
-        console.error(err.message);
+        //console.error(err.message);
         throw new Error(err.message);
     }
 }
