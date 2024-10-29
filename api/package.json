@@ -11,11 +11,11 @@
     "seed": "node script/seed.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest __tests__/*/* --coverage",
-    "test:unit": "jest __tests__/unit/* ",
-    "test:unit-coverage": "jest __tests__/unit/* --coverage --silent=false",
-    "test:integration": "jest __tests__/integration/*",
-    "test:integration-coverage": "jest __tests__/integration/* --coverage"
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest __tests__/unit/ ",
+    "test:unit-coverage": "jest __tests__/unit/ --coverage",
+    "test:integration": "jest __tests__/integration/",
+    "test:integration-coverage": "jest __tests__/integration/ --coverage"
   },
   "dependencies": {
     "@ckeditor/strapi-plugin-ckeditor": "^0.0.7",
@@ -50,14 +50,7 @@
   "jest": {
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [
-      "<rootDir>/.cache/",
-      "<rootDir>/api/node_modules/",
-      "<rootDir>/client/node_modules/"
-    ],
-    "rootDir": "../",
-    "roots": [
-        "<rootDir>/client/pages/",
-        "<rootDir>/api/"
+      "<rootDir>/.cache/"
     ]
   },
   "devDependencies": {

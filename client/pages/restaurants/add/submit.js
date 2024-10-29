@@ -1,4 +1,4 @@
-import { randomBytes } from 'crypto';
+const { randomBytes } = require('crypto');
 
 const findImgIdByName = async (name) => {
     try{
@@ -126,4 +126,4 @@ const postRestaurant = async (postData) => {
     }
 }
 
-export { findImgIdByName, imageUpload, createImgIdArray, postRestaurant }
+module.exports = { findImgIdByName, imageUpload, postRestaurant, createImgIdArray };

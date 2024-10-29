@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test:unit-coverage": "jest __test__/unit/addRestaurant.test.js --coverage"
+    "test": "jest --coverage"
   },
   "dependencies": {
     "@ckeditor/ckeditor5-build-classic": "^35.3.1",
