@@ -566,7 +566,7 @@ yarn test:coverage
 ```
 
 ## Test File Structure
-
+### api test
 ```
 api/
 ├── __tests__/
@@ -574,6 +574,15 @@ api/
 │   │   └── auth.test.js       # Unit tests 
 │   └── integration/
 │       └── auth.integration.test.js  # Integration tests 
+```
+### client test
+```
+client/
+├── __tests__/
+│   ├── unit/
+│   │   └── addRestaurant.test.js              # unit tests
+│   └── integration/
+│       └── addRestaurant.integration.test.js  # Integration tests 
 ```
 
 ## Test Coverage
@@ -680,6 +689,13 @@ describe('POST /api/auth/local', () => {
   });
 });
 ```
+### 3. Unit Tests (addRestaurant.test.js)
+This test will include all the function from file: `<project folder>/client/pages/restaurant/add/submit.js`
+
+Coverage includes:
+- initiate api request
+- bad request handling
+- input error handling
 
 ## Viewing Test Results
 
@@ -798,9 +814,10 @@ Done in 8.40s.
 ## Adding New Tests
 
 ### 1. Unit Tests
-Create new files in `api/__tests__/unit/` following this pattern:
+Create new files in `<./api or ./client>/__tests__/unit/` following this pattern:
 
 ```javascript
+// xxxx.test.js
 describe('Feature Name', () => {
   it('should do something specific', () => {
     // Test implementation
@@ -809,9 +826,10 @@ describe('Feature Name', () => {
 ```
 
 ### 2. Integration Tests
-Create new files in `api/__tests__/integration/` using Supertest:
+Create new files in `<./api or ./client>/__tests__/integration/` using Supertest:
 
 ```javascript
+// xxxx.integration.test.js
 describe('API Endpoint', () => {
   it('should handle request correctly', async () => {
     const response = await request(app)
