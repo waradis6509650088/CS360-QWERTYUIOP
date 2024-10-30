@@ -1,0 +1,14 @@
+{
+  "kind": "collectionType",
+  "collectionName": "protecteds",
+  "info": {
+    "singularName": "protected",
+    "pluralName": "protecteds",
+    "displayName": "Protected",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {}
+}

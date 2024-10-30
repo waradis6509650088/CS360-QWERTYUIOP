@@ -9,6 +9,7 @@ import Container from '../../components/shared/Container';
 import Header from '../../components/shared/Header';
 import { getData, getRestaurants, getStrapiURL } from '../../utils';
 import { getLocalizedParams } from '../../utils/localize';
+import Router from 'next/router'
 
 const Restaurants = ({
   global,
@@ -95,6 +96,19 @@ const Restaurants = ({
                   </option>
                 ))}
             </select>
+          </div>
+          <div className="ml-auto">
+            <button onClick={() => {
+                if(localStorage.getItem('token') != null){
+                    Router.push('/restaurants/add')
+                }
+                else{
+                    alert('you must be logged in to add a restaurant.');
+                    Router.push('/auth')
+                }
+            }} className="py-2 px-6 bg-primary hover:bg-primary-darker text-white transition ease-in duration-200 text-center text-base font-semibold shadow-md rounded-full hidden lg:flex float-right">
+                Add your restaurant
+            </button>
           </div>
         </div>
 
