@@ -70,6 +70,7 @@ if [ -d "node_modules" ]; then #Check if node_modules is already exists
     echo "API dependencies are already installed."
 else
     echo "Installing API dependencies..."
+    npm install
     yarn && yarn seed
 fi
 
@@ -102,6 +103,7 @@ if [ -d "node_modules" ]; then
     echo "Client dependencies are already installed."
 else
     echo "Installing Client dependencies..."
+    npm install
     yarn
 fi
 
