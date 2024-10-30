@@ -120,12 +120,6 @@ else
     exit 1
 fi
 
-# add missing dep
-echo 'install missing dependencies'
-npm install slugify
-npm install kleur
-
-
 # Installing PM2
 echo "Installing PM2..."
 
