@@ -1,5 +1,6 @@
 import axios from "axios";
 import React, {useState, useEffect} from "react";
+import { getStrapiURL } from "../../utils";
 import { IoPersonCircleOutline } from "react-icons/io5";
 import UploadAvatar from "./UploadAvatar";
 import { Button, FormGroup, Input, Label } from "reactstrap";
