@@ -93,10 +93,6 @@ else
     exit 1
 fi
 
-# add missing dep
-npm install slugify
-npm install kleur
-
 echo "Setting up the Client..."
 # Change directory to /home/ec2-user/CS360-QWERTYUIOP/client
 cd $CLIENT_DIR
@@ -123,6 +119,12 @@ else
     echo "Installation Error. .env.development file not found. Please install module again."
     exit 1
 fi
+
+# add missing dep
+echo 'install missing dependencies'
+npm install slugify
+npm install kleur
+
 
 # Installing PM2
 echo "Installing PM2..."
