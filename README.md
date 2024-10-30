@@ -875,7 +875,6 @@ The workflow runs tests across the following combinations:
 ```bash
 # Working directory: ./api
 yarn global add jest
-yarn add @babel/runtime
 yarn && yarn seed
 ```
 
@@ -956,7 +955,6 @@ jobs:
       working-directory: ./api
       run: |
         yarn global add jest
-        yarn add @babel/runtime
         yarn && yarn seed
         echo "JWT_SECRET=test-jwt-secret" >> .env
         echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
