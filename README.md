@@ -368,7 +368,7 @@ if [ -d "node_modules" ]; then #Check if node_modules is already exists
     echo "API dependencies are already installed."
 else
     echo "Installing API dependencies..."
-    yarn && yarn seed
+    yarn --force && yarn seed
 fi
 
 # Check if .env file is already exists
@@ -400,7 +400,7 @@ if [ -d "node_modules" ]; then
     echo "Client dependencies are already installed."
 else
     echo "Installing Client dependencies..."
-    yarn
+    yarn --force
 fi
 
 # Check if .env.development is already in client directory
