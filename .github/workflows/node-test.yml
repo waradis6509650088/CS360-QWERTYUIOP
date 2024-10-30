@@ -2,19 +2,21 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ test-feature06 , develop ]
+    branches: [ test-feature07, test-feature08, test-feature06]
+
   pull_request:
-    branches: [ develop-feature06, develop, main ]
+    branches: [ develop, main ]
 
 jobs:
-  test:
+  tests:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu, debian, redhat]
-        node-version: [16.x , 14.x]
-    
-    runs-on: self-hosted-${{ matrix.os }}
-    
+        os: ['ubuntu:latest', 'debian:latest', 'redhat/ubi8']
+        node-version: [16.x]
+
+    runs-on: ubuntu-latest
+    container: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     
@@ -22,16 +24,16 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-    
-    - name: Install Yarn
-      run: npm install -g yarn
 
+    - name: Install yarn
+      run: npm install -g yarn
+    
     - name: Install api dependencies
       working-directory: ./api
       run: |
-        yarn global add jest
         yarn add @babel/runtime
-        yarn && yarn seed
+        yarn 
+        yarn seed
         echo "JWT_SECRET=test-jwt-secret" >> .env
         echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
 
@@ -40,10 +42,17 @@ jobs:
       run: |
         yarn
     
-    - name: Run unit tests
+    - name: Run api unit tests
       working-directory: ./api
-      run: yarn test:unit
+      run: |
+        yarn test:unit
+
+    - name: Run client unit tests
+      working-directory: ./client
+      run: |
+        yarn test:unit
     
-    - name: Run integration tests
-      working-directory: ./api
-      run: yarn test:integration
+    - name: Run client integration tests
+      working-directory: ./client
+      run: |
+        yarn test:integration
