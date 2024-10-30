@@ -25,7 +25,7 @@ const Navigation = ({ navigation, pageData, type }) => {
 
         {delve(navigation, 'rightButton') && (
           <div className="flex items-center">
-            {user ? (
+            {user?.username != null ? (
               <>
                 <span className="mr-5 text-gray-700">Hello, {user.username}</span>
                 <button

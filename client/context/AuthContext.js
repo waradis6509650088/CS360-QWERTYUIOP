@@ -12,7 +12,8 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+        method:'GET',
         headers: {
           Authorization: `Bearer ${token}`,
         },

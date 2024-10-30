@@ -18,6 +18,7 @@
     "test:integration-coverage": "jest __tests__/integration/ --coverage"
   },
   "dependencies": {
+    "@babel/runtime": "^7.25.9",
     "@ckeditor/strapi-plugin-ckeditor": "^0.0.7",
     "@offset-dev/strapi-calendar": "^0.0.10",
     "@strapi/plugin-graphql": "4.13.5",
