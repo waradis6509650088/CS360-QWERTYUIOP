@@ -70,7 +70,6 @@ if [ -d "node_modules" ]; then #Check if node_modules is already exists
     echo "API dependencies are already installed."
 else
     echo "Installing API dependencies..."
-    npm install
     yarn && yarn seed
 fi
 
@@ -94,6 +93,10 @@ else
     exit 1
 fi
 
+# add missing dep
+npm install slugify
+npm install kleur
+
 echo "Setting up the Client..."
 # Change directory to /home/ec2-user/CS360-QWERTYUIOP/client
 cd $CLIENT_DIR
@@ -103,7 +106,6 @@ if [ -d "node_modules" ]; then
     echo "Client dependencies are already installed."
 else
     echo "Installing Client dependencies..."
-    npm install
     yarn
 fi
 
