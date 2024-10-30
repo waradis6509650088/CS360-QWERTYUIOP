@@ -840,3 +840,147 @@ describe('API Endpoint', () => {
   });
 });
 ```
+
+# Node.js CI Workflow
+
+## Overview
+This repository contains a Node.js continuous integration (CI) workflow that automates testing for both API and client applications across multiple operating systems and Node.js versions.
+
+## Workflow Triggers
+The workflow is triggered on:
+- Push events to `test-feature06` and `develop` branches
+- Pull request events to `develop-feature06`, `develop`, and `main` branches
+
+## CI Environment Matrix
+The workflow runs tests across the following combinations:
+
+### Operating Systems
+- `ubuntu:latest`
+- `debian:latest` 
+- `redhat/ubi8`
+
+### Node.js Versions
+- 16.x
+- 18.x
+
+## Workflow Steps
+
+### 1. Environment Setup
+- Checks out the repository using `actions/checkout@v4`
+- Sets up Node.js using `actions/setup-node@v4`
+- Installs Yarn package manager globally
+
+### 2. API Setup and Testing
+#### Dependencies Installation
+```bash
+# Working directory: ./api
+yarn global add jest
+yarn add @babel/runtime
+yarn && yarn seed
+```
+
+#### Environment Configuration
+Creates `.env` file with test secrets:
+```env
+JWT_SECRET=test-jwt-secret
+ADMIN_JWT_SECRET=test-admin-jwt-secret
+```
+
+#### Testing
+- Runs unit tests: `yarn test:unit`
+- Runs integration tests: `yarn test:integration`
+
+### 3. Client Setup and Testing
+#### Dependencies Installation
+```bash
+# Working directory: ./client
+yarn
+```
+
+#### Testing
+- Runs unit tests: `yarn test:unit`
+- Runs integration tests: `yarn test:integration`
+
+## Project Structure
+```
+.
+├── api/                # Backend API application
+│   ├── __tests__/
+│   │   ├── unit/
+│   │   └── integration/
+│   └── package.json
+│
+└── client/            # Frontend client application
+    ├── __tests__/
+    │   ├── unit/
+    │   └── integration/
+    └── package.json
+```
+
+## GitHub Actions Configuration
+This workflow uses the following configuration:
+
+```yaml
+name: Node.js CI
+
+on:
+  push:
+    branches: [ test-feature06 , develop ]
+  pull_request:
+    branches: [ develop-feature06, develop, main ]
+
+jobs:
+
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu:latest', 'debian:latest', 'redhat/ubi8'] 
+        node-version: [16.x , 18.x]
+    
+    runs-on: ubuntu-latest
+    container: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    
+    - name: Install Yarn
+      run: npm install -g yarn
+    
+    - name: Install api dependencies
+      working-directory: ./api
+      run: |
+        yarn global add jest
+        yarn add @babel/runtime
+        yarn && yarn seed
+        echo "JWT_SECRET=test-jwt-secret" >> .env
+        echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
+    
+    - name: Install client dependencies
+      working-directory: ./client
+      run: |
+        yarn
+    
+    - name: Run api unit tests
+      working-directory: ./api
+      run: yarn test:unit
+    
+    - name: Run api integration tests
+      working-directory: ./api
+      run: yarn test:integration
+    
+    - name: Run client unit tests
+      working-directory: ./client
+      run: |
+        yarn test:unit
+    
+    - name: Run client integration tests
+      working-directory: ./client
+      run: |
+        yarn test:integration
+```
