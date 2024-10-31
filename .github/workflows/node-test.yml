@@ -31,13 +31,19 @@ jobs:
       working-directory: ./api
       run: |
         yarn global add jest
-        yarn && yarn seed
+        yarn --force && yarn seed
         echo "JWT_SECRET=test-jwt-secret" >> .env
         echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
+        npm install @babel/plugin-transform-runtime
+
     - name: Install client dependencies
       working-directory: ./client
       run: |
-        yarn
+        yarn --force
+
+    - name: build npm for each node version
+      working-directory: ./api
+      run: npm rebuild
     
     - name: Run api unit tests
       working-directory: ./api
