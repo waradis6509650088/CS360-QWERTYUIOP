@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import {Button, Form, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader} from "reactstrap";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) => {
+const UploadAvatar = ({ userId, token, username, setisUserUpdated }) => {
     const [modal, setModal] = useState(false);
     const [file, setFile] = useState(null);
 
@@ -26,11 +26,12 @@ const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) 
         }
     };
 
-    const updateUserAvatarId = async (avatarId, avatarUrl) => {
+    const updaterUserProfile = async (pictureId) => {
         try {
             await axios.put(
+                //`http://localhost:1337/api/users/1`,
                 `http://localhost:1337/api/users/${userId}`,
-                { avatarId, avatarUrl },
+                { picture: pictureId}, //ส่ง ID ของ media
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -40,7 +41,7 @@ const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) 
             );
             setisUserUpdated(true);
         } catch (error) {
-            console.log({ error });
+            console.log( "Error updating user profile:" ,error );
         }
     };
 
@@ -58,14 +59,14 @@ const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) 
             files.append("name", `${username} avatar`);
 
             const {
-                data: [{ id, url }],
+                data: [{ id }],
             } = await axios.post(`http://localhost:1337/api/upload`, files, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                     Authorization: `bearer ${token}`,
                 },
             });
-            updateUserAvatarId(id, url);
+            await updaterUserProfile(id); //Update field picture ของ user
             setFile(null);
             setModal(false);
 
@@ -83,11 +84,11 @@ const UploadAvatar = ({ userId, token, username, avatarUrl, setisUserUpdated }) 
     <div className="Change-picture mt-2 ml-6 ">
         {isClient && (
             <Button size="sm" onClick={toggle} style={{ backgroundColor:'#e27d60', color: 'white', border: 'none'}}>
-                {`${avatarUrl ? "Change" : "Upload"} picture`}
+                Change picture
             </Button>
         )}  
             <Modal isOpen={modal} toggle={toggle}>
-                <ModalHeader toggle={toggle}>{`${avatarUrl ? "Change" : "Upload"} your picture`} </ModalHeader>
+                <ModalHeader toggle={toggle}>Upload your picture </ModalHeader>
                 <ModalBody>
                     <Form>
                         <FormGroup>

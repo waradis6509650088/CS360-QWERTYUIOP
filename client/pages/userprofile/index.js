@@ -6,8 +6,7 @@ import UploadAvatar from "./UploadAvatar";
 import { Button, FormGroup, Input, Label } from "reactstrap";
 //import Layout from '../../components/layout';
 
-
-const UserProfile = ({ token = "your token"}) => {
+const UserProfile = ({ token = "yourtoken"}) => {
    const [user, setUser] = useState({});
    const [isUserUpdated , setisUserUpdated] = useState(false);
    const [firstName, setFirstName] = useState(user.setfirstname || "");
@@ -18,10 +17,10 @@ const UserProfile = ({ token = "your token"}) => {
    
    useEffect(() => {
     const getProfileData = async () => {
-        try {                              //http:localhost:1337/api/users/me http://localhost:1337/api/users/1?populate=*
+        try {                              //http:localhost:1337/api/users/me http://localhost:1337/api/users/1?populate=* http://localhost:1337/api/users/me?populate=*
             const {data} = await axios.get(`http://localhost:1337/api/users/me?populate=*`, {
                 headers: {
-                    Authorization: `bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                 },
             });
             setUser(data);
@@ -48,10 +47,10 @@ const UserProfile = ({ token = "your token"}) => {
             email: email,
             job: job,
             gender: gender,
-        };              //http:localhost:1337/api/users/me
+        };              //http:localhost:1337/api/users/1
         await axios.put(`http://localhost:1337/api/users/me`, updateInfo, {
             headers: {
-                Authorization: `Bearer ${token},`
+                Authorization: `Bearer ${token}`,
             },
         });
         toast.success("Profile updated successfully");
