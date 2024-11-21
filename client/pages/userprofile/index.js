@@ -3,6 +3,7 @@ import React, {useState, useEffect} from "react";
 import { IoPersonCircleOutline } from "react-icons/io5";
 import UploadAvatar from "./UploadAvatar";
 import { Button, FormGroup, Input, Label } from "reactstrap";
+import { toast } from "react-toastify";
 //import Layout from '../../components/layout';
 
 
@@ -128,3 +129,4 @@ const UserProfile = ({ token = "your token"}) => {
 };
 
 export default UserProfile;
+export { UserProfile };
