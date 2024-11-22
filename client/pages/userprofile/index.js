@@ -6,7 +6,7 @@ import UploadAvatar from "./UploadAvatar";
 import { Button, FormGroup, Input, Label } from "reactstrap";
 //import Layout from '../../components/layout';
 
-const UserProfile = ({ token = "yourtoken"}) => {
+const UserProfile = ({ token }) => {
    const [user, setUser] = useState({});
    const [isUserUpdated , setisUserUpdated] = useState(false);
    const [firstName, setFirstName] = useState(user.setfirstname || "");
@@ -128,3 +128,4 @@ const UserProfile = ({ token = "yourtoken"}) => {
 };
 
 export default UserProfile;
+export { UserProfile };
