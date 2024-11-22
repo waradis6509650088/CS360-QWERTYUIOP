@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 //import Layout from '../../components/layout';
 
 
-const UserProfile = ({ token = "your token"}) => {
+const UserProfile = ({ token }) => {
    const [user, setUser] = useState({});
    const [isUserUpdated , setisUserUpdated] = useState(false);
    const [firstName, setFirstName] = useState(user.setfirstname || "");
