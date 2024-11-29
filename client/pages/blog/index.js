@@ -1,6 +1,8 @@
 import delve from "dlv";
 import { useState } from "react";
 import { useQuery } from "react-query";
+import { useContext } from "react";
+import { AuthContext } from "../../context/AuthContext";
 import Layout from "../../components/layout";
 import NoResults from "../../components/no-results";
 import ArticleCard from "../../components/pages/blog/ArticleCard";
@@ -9,6 +11,7 @@ import Container from "../../components/shared/Container";
 import Header from "../../components/shared/Header";
 import { getArticles, getData, getStrapiURL } from "../../utils";
 import { getLocalizedParams } from "../../utils/localize";
+import Link from "next/link";
 
 const Articles = ({
   global,
@@ -19,6 +22,8 @@ const Articles = ({
   perPage,
   preview,
 }) => {
+  const { user } = useContext(AuthContext);
+
   const [categoryId, setCategoryId] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
 
@@ -51,7 +56,7 @@ const Articles = ({
     >
       <Container>
         <Header {...header} />
-        <div className="flex flex-col md:flex-row gap-2 my-24 px-4">
+        <div className="flex flex-col md:flex-row gap-2 my-24 px-4 justify-between items-center">
           <div>
             <label className="text-gray-700">
               <select
@@ -75,6 +80,13 @@ const Articles = ({
               </select>
             </label>
           </div>
+          {user && (
+            <Link href="/blog/new">
+              <a className="py-2 px-6 bg-primary hover:bg-primary-darker text-white transition ease-in duration-200 text-center text-base font-semibold shadow-md rounded-full">
+                Write New Article
+              </a>
+            </Link>
+          )}
         </div>
 
         <NoResults status={status} length={delve(data, 'articles').length} />
