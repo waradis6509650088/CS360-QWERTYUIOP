@@ -1656,10 +1656,10 @@
     "lodash" "^4.17.21"
     "redent" "^3.0.0"
 
-"@testing-library/react@^15.0.7":
-  "integrity" "sha512-cg0RvEdD1TIhhkm1IeYMQxrzy0MtUNfa3minv4MjbgcYzJAZ7yD0i0lwoPOTPr+INtiXFezt2o8xMSnyHhEn2Q=="
-  "resolved" "https://registry.npmjs.org/@testing-library/react/-/react-15.0.7.tgz"
-  "version" "15.0.7"
+"@testing-library/react@^15.0.0":
+  "integrity" "sha512-Nb2Sq8MoSvGVdOGGppRqXeafLtvXCOwiOQtcbqCfkpVNZZNUqIjeSOwrfJ59zBfmZbAn8PitnWEzUKD1YwMrCg=="
+  "resolved" "https://registry.npmjs.org/@testing-library/react/-/react-15.0.0.tgz"
+  "version" "15.0.0"
   dependencies:
     "@babel/runtime" "^7.12.5"
     "@testing-library/dom" "^10.0.0"
@@ -1795,7 +1795,7 @@
   dependencies:
     "@types/react" "*"
 
-"@types/react@*", "@types/react@^18.0.0", "@types/react@>=16", "@types/react@>=16.14.8", "@types/react@>=16.9.11":
+"@types/react@*", "@types/react@>=16", "@types/react@>=16.14.8", "@types/react@>=16.9.11":
   "integrity" "sha512-D2wOSq/d6Agt28q7rSI3jhU7G6aiuzljDGZ2hTZHIkrTLUI+AF3WMeKkEZ9nN2fkBAlcktT6vcZjDFiIhMYEQw=="
   "resolved" "https://registry.npmjs.org/@types/react/-/react-18.3.12.tgz"
   "version" "18.3.12"
