@@ -285,14 +285,14 @@ sudo yum install git -y
 
 #### 3. Clone the repository
 ```bash
-sudo yum install git -y
+git clone https://github.com/Kanchanop6509650229/CS360-QWERTYUIOP.git
 ```
 
 ### Deployment Steps
 
 #### 1. Locate to bash script file
 ```
-cd /CS360-QWERTYUIOP/script
+cd /CS360-QWERTYUIOP
 ```
 
 #### 2. Change the file permissions to make it executable as a program.
