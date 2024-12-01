@@ -271,9 +271,26 @@ http://Your_Public_IP:3000
 
 ## How to deploy and run the project using the provided bash script [Specify the bash script path in the repo]
 
+### Prerequisites
+
+#### 1. SSH into your EC2 instance
+```bash
+ssh -i your-key.pem ec2-user@your-instance-ip
+```
+
+#### 2. Install Git
+```bash
+sudo yum install git -y
+```
+
+#### 3. Clone the repository
+```bash
+sudo yum install git -y
+```
+
+### Deployment Steps
 
 #### 1. Locate to bash script file
-
 ```
 cd /CS360-QWERTYUIOP/script
 ```
