@@ -2,19 +2,20 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ test-feature06 ]
+    branches: [ test-feature06, test-feature07, test-feature08 ]
   pull_request:
-    branches: [ develop-feature06, develop, main ]
+    branches: [ develop, main ]
 
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu, debian, redhat]
+        os: ['ubuntu:latest', 'debian:latest', 'redhat/ubi8']
         node-version: [16.x]
     
-    runs-on: self-hosted-${{ matrix.os }}
-    
+    runs-on: ubuntu-latest
+    container: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v4
     
@@ -29,21 +30,20 @@ jobs:
     - name: Install api dependencies
       working-directory: ./api
       run: |
-        yarn global add jest
         yarn add @babel/runtime
-        yarn && yarn seed
+        yarn install
+        yarn seed
         echo "JWT_SECRET=test-jwt-secret" >> .env
         echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
 
     - name: Install client dependencies
       working-directory: ./client
-      run: |
-        yarn
+      run: yarn install
     
     - name: Run unit tests
-      working-directory: ./api
+      working-directory: ./client
       run: yarn test:unit
     
     - name: Run integration tests
-      working-directory: ./api
+      working-directory: ./client
       run: yarn test:integration
