@@ -629,182 +629,164 @@ describe('API Endpoint', () => {
 ## CI/CD Pipeline
 
 ### Overview
+The project implements an automated continuous integration (CI) workflow using GitHub Actions to ensure code quality and reliability. The pipeline executes comprehensive testing suites for both API and client applications, maintaining high standards of code quality across all changes.
 
-This repository contains a Node.js continuous integration (CI) workflow that automates testing for both API and client applications across multiple operating systems and Node.js versions.
+### Pipeline Configuration
+#### Workflow Triggers
+The CI pipeline activates on:
+- **Push Events:**
+  - `develop` branch
+  - `fix-from-feedback` branch
+- **Pull Request Events:**
+  - `develop` branch
+  - `main` branch
 
-## Workflow Triggers
+#### Environment Matrix
+- **Operating System:** Ubuntu Latest
+- **Node.js Version:** 16.x
 
-The workflow is triggered on:
+### Infrastructure Components
 
-- Push events to `test-feature06` and `develop` branches
-- Pull request events to `develop-feature06`, `develop`, and `main` branches
+#### 1. Environment Setup
+- Repository checkout via `actions/checkout@v4`
+- Node.js configuration using `actions/setup-node@v4`
+- Dependency caching system:
+  ```yaml
+  - uses: actions/cache@v3
+    with:
+      path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+      key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+  ```
 
-## CI Environment Matrix
-
-The workflow runs tests across the following combinations:
-
-### Operating Systems
-
-- `ubuntu:latest`
-- `debian:latest`
-- `redhat/ubi8`
-
-### Node.js Versions
-
-- 16.x
-- 18.x
-
-## Workflow Steps
-
-### 1. Environment Setup
-
-- Checks out the repository using `actions/checkout@v4`
-- Sets up Node.js using `actions/setup-node@v4`
-- Installs Yarn package manager globally
-
-### 2. API Setup and Testing
-
-#### Dependencies Installation
-
+#### 2. System Dependencies
 ```bash
-# Working directory: ./api
+# Ubuntu packages
+sudo apt-get update
+sudo apt-get install -y build-essential
+
+# Database setup
+npm rebuild sqlite3 --force
+```
+
+#### 3. Development Tools
+```bash
+# Global installations
+npm install -g yarn
 yarn global add jest
-yarn && yarn seed
 ```
 
-#### Environment Configuration
+### Testing Infrastructure
 
-Creates `.env` file with test secrets:
-
-```env
-JWT_SECRET=test-jwt-secret
-ADMIN_JWT_SECRET=test-admin-jwt-secret
-```
-
-#### Testing
-
-- Runs unit tests: `yarn test:unit`
-- Runs integration tests: `yarn test:integration`
-
-### 3. Client Setup and Testing
-
-#### Dependencies Installation
-
-```bash
-# Working directory: ./client
-yarn
-```
-
-#### Testing
-
-- Runs unit tests: `yarn test:unit`
-- Runs integration tests: `yarn test:integration`
-
-## Project Structure
-
+#### Project Structure
 ```
 .
-├── api/                # Backend API application
-│   ├── __tests__/
-│   │   ├── unit/
-│   │   └── integration/
+├── api/                        # Backend API application
+│   ├── __tests__/             
+│   │   ├── integration/       # API integration tests
+│   │   │   ├── auth.integration.test.js
+│   │   │   └── ...
+│   │   └── unit/             # API unit tests
+│   │       ├── auth.test.js
+│   │       └── ...
 │   └── package.json
 │
-└── client/            # Frontend client application
-    ├── __tests__/
-    │   ├── unit/
-    │   └── integration/
+└── client/                    # Frontend client application
+    ├── __tests__/            
+    │   ├── integration/      # Client integration tests
+    │   │   ├── addRestaurant.integration.test.js
+    │   │   └── ...
+    │   └── unit/            # Client unit tests
+    │       ├── addRestaurant.test.js
+    │       └── ...
     └── package.json
 ```
 
-## GitHub Actions Configuration
+#### Test Configuration Files
+- `jest.config.js`: Jest configuration
+- `setup.js`: Test environment setup
+- `env.js`: Testing environment variables
 
-This workflow uses the following configuration:
-
-```yaml
-name: Node.js CI
-
-on:
-  push:
-    branches: [test-feature06, develop]
-  pull_request:
-    branches: [develop-feature06, develop, main]
-
-jobs:
-  tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ['ubuntu:latest', 'debian:latest', 'redhat/ubi8']
-        node-version: [16.x, 18.x]
-
-    runs-on: ubuntu-latest
-    container: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install Yarn
-        run: npm install -g yarn
-
-      - name: Install api dependencies
-        working-directory: ./api
-        run: |
-          yarn global add jest
-          yarn && yarn seed
-          echo "JWT_SECRET=test-jwt-secret" >> .env
-          echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
-
-      - name: Install client dependencies
-        working-directory: ./client
-        run: |
-          yarn
-
-      - name: Run api unit tests
-        working-directory: ./api
-        run: yarn test:unit
-
-      - name: Run api integration tests
-        working-directory: ./api
-        run: yarn test:integration
-
-      - name: Run client unit tests
-        working-directory: ./client
-        run: |
-          yarn test:unit
-
-      - name: Run client integration tests
-        working-directory: ./client
-        run: |
-          yarn test:integration
+#### API Testing Suite
+```bash
+# Directory: ./api
+yarn test:unit        # Run unit tests
+yarn test:integration # Run integration tests
 ```
 
-## Accessing Pipeline Results
+#### Client Testing Suite
+```bash
+# Directory: ./client
+yarn test:unit        # Run unit tests
+yarn test:integration # Run integration tests
+```
 
-### GitHub Actions Interface
+### Security Implementation
+- Secure environment variable handling via GitHub Secrets
+- JWT token management for authentication tests
+- Protected API endpoints testing
 
-#### 1. Navigate to Pipeline Dashboard
-1. Go to the project repository on GitHub
-2. Click the "Actions" tab in the top navigation bar
-3. Locate the latest workflow run in the list
-   ```
-   Repository > Actions > Workflow Runs
-   ```
+### Pipeline Execution
 
-#### 2. View Workflow Overview
-- Status indicators show pipeline health:
-  - ✅ Green check: Successful run
-  - ❌ Red X: Failed run
-  - 🟡 Yellow dot: In progress
+#### 1. Initialization Phase
+```yaml
+steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-node@v4
+    with:
+      node-version: ${{ matrix.node-version }}
+```
 
-#### 3. Examine Detailed Results
-1. Click on the specific workflow run
-2. Review the test matrix results:
-   - Each OS/Node.js version combination
-   - Individual test suite outcomes
-   - Build artifacts and logs
+#### 2. Dependency Management
+```yaml
+- name: Cache API dependencies
+  uses: actions/cache@v3
+  with:
+    path: ${{ steps.api-yarn-cache-dir-path.outputs.dir }}
+    key: ${{ runner.os }}-yarn-api-${{ hashFiles('api/yarn.lock') }}
+```
+
+#### 3. Environment Configuration
+```yaml
+env:
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
+```
+
+#### 4. Test Execution
+```yaml
+- name: Run API tests
+  working-directory: ./api
+  run: |
+    yarn test:unit
+    yarn test:integration
+
+- name: Run client tests
+  working-directory: ./client
+  run: |
+    yarn test:unit
+    yarn test:integration
+```
+
+### Monitoring and Results
+
+#### Pipeline Status Indicators
+- ✅ Success: All tests passed
+- ❌ Failure: Test failures detected
+- 🟡 In Progress: Pipeline executing
+
+#### Accessing Build Results
+1. Navigate to GitHub repository
+2. Select "Actions" tab
+3. Click desired workflow run
+4. Review:
+   - Test execution logs
+   - Build artifacts
+   - Error reports
+   - Coverage statistics
+
+### Pipeline Maintenance
+To modify pipeline configuration:
+1. Edit `.github/workflows/node-test.yml`
+2. Update test scripts in respective package.json files
+3. Modify environment variables in GitHub Secrets
+4. Update cache configuration as dependencies change
