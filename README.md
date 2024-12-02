@@ -30,11 +30,11 @@ The application addresses the challenge of information overload, particularly in
 | Primchawat Areerat | 6309651039 |
 
 ## Project Features
-1. Category and location-based content filtering
-2. Personalized blog post recommendations
-3. Subscription service management
-4. Dynamic blog post presentation
-5. CRUD operations via Strapi API
+- **Restaurant Discovery:** Users can explore restaurants by filtering through different food categories and locations, making it easy to find dining options that match their preferences
+- **User Profile Management:** Users can customize and maintain their personal profiles, including updating their information and managing their account settings
+- **Restaurant Management:** Restaurant owners can create and manage their restaurant profiles, including updating menus, hours, locations, and responding to customer reviews
+- **Culinary Blog Platform:** Food enthusiasts can explore curated blog posts about restaurants, cuisines, and dining experiences, with content filtered by categories and preferences
+- **Content Creation System:** Users can contribute to the platform by writing and publishing their own articles about food-related experiences, cooking tips, and restaurant reviews
 
 ## Technologies
 - **Backend:** Strapi V4
