@@ -1,6 +1,7 @@
 # CS360 1/2567 Term Project: Food Advisor
 
 ## Table of Contents
+
 - [Project Overview](#project-overview)
 - [Group Information](#group-information)
 - [Project Features](#project-features)
@@ -12,6 +13,7 @@
 - [CI/CD Pipeline](#cicd-pipeline)
 
 ## Project Overview
+
 FoodAdvisor is a web application designed to simplify the process of discovering food-related content, such as blog posts, based on the user's specific preferences. By allowing users to select their favorite food categories, it ensures personalized recommendations, thus enhancing user engagement and satisfaction.
 
 The application addresses the challenge of information overload, particularly in the food industry where users often struggle to find relevant, high-quality content that fits their tastes. By offering a tailored approach, FoodAdvisor solves the problem of inefficient food content discovery and creates an opportunity for food bloggers, restaurants, and food enthusiasts to connect in a more meaningful, user-centric way.
@@ -21,15 +23,17 @@ The application addresses the challenge of information overload, particularly in
 - **Group Name:** QWERTYUIOP
 
 ### Members
-| Name | Student ID |
-|------|------------|
-| Kanchanop Buarod | 6509650229 |
-| Thantawan Chitsan | 6509650427 |
+
+| Name                | Student ID |
+| ------------------- | ---------- |
+| Kanchanop Buarod    | 6509650229 |
+| Thantawan Chitsan   | 6509650427 |
 | Haritch Utchavanich | 6509650757 |
-| Waradis Kamolwach | 6509650088 |
-| Primchawat Areerat | 6309651039 |
+| Waradis Kamolwach   | 6509650088 |
+| Primchawat Areerat  | 6309651039 |
 
 ## Project Features
+
 - **Restaurant Discovery:** Users can explore restaurants by filtering through different food categories and locations, making it easy to find dining options that match their preferences
 - **User Profile Management:** Users can customize and maintain their personal profiles, including updating their information and managing their account settings
 - **Restaurant Management:** Restaurant owners can create and manage their restaurant profiles, including updating menus, hours, locations, and responding to customer reviews
@@ -37,6 +41,7 @@ The application addresses the challenge of information overload, particularly in
 - **Content Creation System:** Users can contribute to the platform by writing and publishing their own articles about food-related experiences, cooking tips, and restaurant reviews
 
 ## Technologies
+
 - **Backend:** Strapi V4
 - **Frontend:** NextJS + Tailwind
 - **Infrastructure:** AWS EC2
@@ -340,22 +345,34 @@ In this project, we use the following testing tools:
 - **Supertest**: For testing HTTP endpoints in Integration Tests
 - **Strapi Testing Utils**: For simulating Strapi instance in tests
 
-Total Test Cases: 28
-- Unit Tests: 16
-- Integration Tests: 12
+Total Test Cases: 32 
 
-| Component | Feature | Test Type | Cases | Description |
-|-----------|---------|----------|--------|-------------|
-| Auth      | Login   | Unit     | 4      | Token validation, response handling |
-|           |         | Integration | 2    | API endpoint testing |
-| Auth      | Register| Unit     | 4      | Input validation, error handling |
-|           |         | Integration | 3    | API endpoint testing |
-| Restaurant| Add     | Unit     | 8      | Image upload, data validation |
-|           |         | Integration | 7    | API endpoint testing |
+- Unit Tests: 20 
+
+- Integration Tests: 12 
+
+Here's the corrected breakdown table:
+
+| Component  | Feature  | Test Type   | Cases | Description                         |
+
+| ---------- | -------- | ----------- | ----- | ----------------------------------- |
+
+| Auth       | Login    | Unit        | 6     | Token validation, response handling, timeout testing |
+
+|            |          | Integration | 2     | API endpoint testing                |
+
+| Auth       | Register | Unit        | 6     | Input validation, error handling, performance testing |
+
+|            |          | Integration | 3     | API endpoint testing                |
+
+| Restaurant | Add      | Unit        | 8     | Image upload, data validation, error handling |
+
+|            |          | Integration | 7     | API endpoint testing, integration validation |
 
 ### Features Tested
 
 #### Authentication Module
+
 - User login validation
 - Registration process
 - Token generation and validation
@@ -363,6 +380,7 @@ Total Test Cases: 28
 - Request timeout checks
 
 #### Restaurant Management
+
 - Image upload functionality
 - Data validation
 - API integration
@@ -456,46 +474,96 @@ describe('Login Function', () => {
       user: {
         id: 1,
         username: 'testuser',
-        email: 'test@example.com',
-      },
+        email: 'test@example.com'
+      }
     };
     // Test implementation
+  });
+
+  it('should handle login failure with invalid credentials', async () => {
+    const response = await fetch('/api/auth/local', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: 'wrong', password: 'wrong' })
+    });
+    expect(response.status).toBe(400);
   });
 });
 ```
 
 Coverage includes:
-
 - POST request to `/api/auth/local`
 - JWT token validation
-- User data validation
+- User data validation 
+- Error handling for invalid credentials
 
-#### Registration Function
+#### Registration Function 
 
 ```javascript
-it('should register within timeout', async () => {
-  const startTime = Date.now();
-  const result = await register(
-    'newuser',
-    'newuser@example.com',
-    'password123'
-  );
-  const endTime = Date.now();
-  const executionTime = endTime - startTime;
+describe('Register Function', () => {
+  it('should register within timeout', async () => {
+    const startTime = Date.now();
+    const result = await register(
+      'newuser',
+      'newuser@example.com', 
+      'password123'
+    );
+    const endTime = Date.now();
+    const executionTime = endTime - startTime;
 
-  expect(executionTime).toBeLessThan(timeout);
-  expect(result.jwt).toBe('new-user-token');
-  expect(result.user.username).toBe('newuser');
+    expect(executionTime).toBeLessThan(timeout);
+    expect(result.jwt).toBe('new-user-token');
+    expect(result.user.username).toBe('newuser');
+  });
+
+  it('should handle registration failure with duplicate email', async () => {
+    const response = await register('newuser', 'existing@example.com', 'password123');
+    expect(response.status).toBe(400);
+  });
 });
 ```
 
 Coverage includes:
+- Registration request validation
+- Performance testing
+- Token validation
+- Error handling for duplicate data
 
-- Registration request to `/api/auth/local/register`
-- Performance testing of registration process
-- Validation of JWT token and new user data
+### 2. Unit Tests (addRestaurant.test.js)
 
-### 2. Integration Tests (auth.integration.test.js)
+#### Image Management
+
+```javascript
+describe('function: findImgIdByName', () => {
+  it('should return image id when name is found', async () => {
+    const name = 'correct_image_name';
+    const correctId = 123;
+    const imageId = await findImgIdByName(name);
+    expect(imageId).toBe(correctId);
+  });
+
+  it('should throw error when name not found', async () => {
+    const name = 'wrong_image_name';
+    await expect(findImgIdByName(name)).rejects.toThrow();
+  });
+});
+
+describe('function: imageUpload', () => {
+  it('should limit image uploads to 5 files', async () => {
+    const images = Array.from({ length: 7 }, (_, i) => new File(['content'], `test${i + 1}.jpg`, { type: 'image/jpeg' }));
+    const result = await imageUpload(images, 'TestRestaurant');
+    expect(result).toHaveLength(5);
+  });
+});
+```
+
+Coverage includes:
+- Image ID validation
+- Upload size limitations
+- File type validation
+- Error handling for uploads
+
+### 3. Integration Tests (auth.integration.test.js)
 
 #### Authentication Setup
 
@@ -505,12 +573,10 @@ beforeAll(async () => {
   await strapi.start();
   request = supertest(strapi.server.httpServer);
 
-  // Get Authenticated role
   authRole = await strapi.query('plugin::users-permissions.role').findOne({
     where: { type: 'authenticated' },
   });
 
-  // Create test user
   await strapi.plugins['users-permissions'].services.user.add({
     username: 'testuser',
     email: 'test@example.com',
@@ -521,14 +587,8 @@ beforeAll(async () => {
     provider: 'local',
     blocked: false,
   });
-}, 30000);
+});
 ```
-
-Coverage includes:
-
-- Strapi server initialization
-- Test user creation
-- Roles and permissions configuration
 
 #### Login Endpoint Tests
 
@@ -537,35 +597,37 @@ describe('POST /api/auth/local', () => {
   it('should login successfully with valid credentials', async () => {
     const response = await request.post('/api/auth/local').send({
       identifier: 'test@example.com',
-      password: 'Password123!',
+      password: 'Password123!'
     });
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('jwt');
-    expect(response.body).toHaveProperty('user');
-  });
-
-  it('should fail login with invalid credentials', async () => {
-    const response = await request.post('/api/auth/local').send({
-      identifier: 'wrong@email.com',
-      password: 'wrongpassword',
-    });
-
-    expect(response.status).toBe(400);
-    expect(response.body).toHaveProperty('error');
   });
 });
 ```
 
-### 3. Unit Tests (addRestaurant.test.js)
+### 4. Integration Tests (addRestaurant.integration.test.js)
 
-This test will include all the function from file: `<project folder>/client/pages/restaurant/add/submit.js`
+#### Restaurant Creation Flow
 
-Coverage includes:
+```javascript
+describe('Restaurant Creation Integration', () => {
+  it('should validate required fields in request payload', async () => {
+    const invalidData = { data: { name: 'Test Restaurant' } };
 
-- initiate api request
-- bad request handling
-- input error handling
+    const response = await fetch('http://localhost:1337/api/restaurants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(invalidData)
+    });
+
+    expect(response.ok).toBe(false);
+  });
+});
+```
 
 ## Viewing Test Results
 
@@ -585,16 +647,67 @@ The test results can be viewed in two ways:
 
 Recent test execution results:
 
-| Module      | Total Tests | Passed | Failed | Coverage |
-|-------------|-------------|---------|--------|-----------|
-| Auth        | 13         | 13     | 0      | 89.87%    |
-| Restaurant  | 15         | 15     | 0      | 92.31%    |
+| Component | Test Suites | Tests | Coverage Details |
 
-Detailed coverage metrics:
-- Statement coverage: 89.87%
-- Branch coverage: 83.33%
-- Function coverage: 85.71%
-- Line coverage: 89.47%
+|-----------|-------------|-------|------------------|
+
+| API | 2 passed | 9 passed | Statements: 89.77%<br>Branches: 40%<br>Functions: 85.71%<br>Lines: 89.41% |
+
+| Client | 2 passed | 23 passed | Statements: 91.3%<br>Branches: 85%<br>Functions: 100%<br>Lines: 90.76% |
+
+### API Coverage Highlights
+
+- Full coverage (100%) on most API endpoints including:
+
+  - Article
+
+  - Blog page
+
+  - Category
+
+  - Global
+
+  - Page
+
+  - Place
+
+  - Restaurant
+
+  - Review
+
+- Areas needing improvement:
+
+  - Policies (auth.js): 11.11% coverage
+
+  - Database config: 50% branch coverage
+
+  - Index.js: 90% coverage with line 40 uncovered
+
+### Client Coverage Highlights
+
+- High overall coverage in submit.js:
+
+  - Statements: 91.3%
+
+  - Branches: 85%
+
+  - Functions: 100%
+
+  - Lines: 90.76%
+
+- Uncovered lines in submit.js: 12, 82, 91, 94, 97, 100
+
+- All test suites passing successfully
+
+### Total Project Statistics
+
+- Total Test Suites: 4 passed (2 API + 2 Client)
+
+- Total Tests: 32 passed (9 API + 23 Client)
+
+- Average Statement Coverage: 90.53%
+
+- Average Line Coverage: 90.08%
 
 ## Adding New Tests
 
@@ -629,11 +742,15 @@ describe('API Endpoint', () => {
 ## CI/CD Pipeline
 
 ### Overview
+
 The project implements an automated continuous integration (CI) workflow using GitHub Actions to ensure code quality and reliability. The pipeline executes comprehensive testing suites for both API and client applications, maintaining high standards of code quality across all changes.
 
 ### Pipeline Configuration
+
 #### Workflow Triggers
+
 The CI pipeline activates on:
+
 - **Push Events:**
   - `develop` branch
   - `fix-from-feedback` branch
@@ -642,12 +759,14 @@ The CI pipeline activates on:
   - `main` branch
 
 #### Environment Matrix
+
 - **Operating System:** Ubuntu Latest
 - **Node.js Version:** 16.x
 
 ### Infrastructure Components
 
 #### 1. Environment Setup
+
 - Repository checkout via `actions/checkout@v4`
 - Node.js configuration using `actions/setup-node@v4`
 - Dependency caching system:
@@ -659,6 +778,7 @@ The CI pipeline activates on:
   ```
 
 #### 2. System Dependencies
+
 ```bash
 # Ubuntu packages
 sudo apt-get update
@@ -669,6 +789,7 @@ npm rebuild sqlite3 --force
 ```
 
 #### 3. Development Tools
+
 ```bash
 # Global installations
 npm install -g yarn
@@ -678,10 +799,11 @@ yarn global add jest
 ### Testing Infrastructure
 
 #### Project Structure
+
 ```
 .
 ├── api/                        # Backend API application
-│   ├── __tests__/             
+│   ├── __tests__/
 │   │   ├── integration/       # API integration tests
 │   │   │   ├── auth.integration.test.js
 │   │   │   └── ...
@@ -691,7 +813,7 @@ yarn global add jest
 │   └── package.json
 │
 └── client/                    # Frontend client application
-    ├── __tests__/            
+    ├── __tests__/
     │   ├── integration/      # Client integration tests
     │   │   ├── addRestaurant.integration.test.js
     │   │   └── ...
@@ -702,11 +824,13 @@ yarn global add jest
 ```
 
 #### Test Configuration Files
+
 - `jest.config.js`: Jest configuration
 - `setup.js`: Test environment setup
 - `env.js`: Testing environment variables
 
 #### API Testing Suite
+
 ```bash
 # Directory: ./api
 yarn test:unit        # Run unit tests
@@ -714,6 +838,7 @@ yarn test:integration # Run integration tests
 ```
 
 #### Client Testing Suite
+
 ```bash
 # Directory: ./client
 yarn test:unit        # Run unit tests
@@ -721,6 +846,7 @@ yarn test:integration # Run integration tests
 ```
 
 ### Security Implementation
+
 - Secure environment variable handling via GitHub Secrets
 - JWT token management for authentication tests
 - Protected API endpoints testing
@@ -728,6 +854,7 @@ yarn test:integration # Run integration tests
 ### Pipeline Execution
 
 #### 1. Initialization Phase
+
 ```yaml
 steps:
   - uses: actions/checkout@v4
@@ -737,6 +864,7 @@ steps:
 ```
 
 #### 2. Dependency Management
+
 ```yaml
 - name: Cache API dependencies
   uses: actions/cache@v3
@@ -746,6 +874,7 @@ steps:
 ```
 
 #### 3. Environment Configuration
+
 ```yaml
 env:
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -753,6 +882,7 @@ env:
 ```
 
 #### 4. Test Execution
+
 ```yaml
 - name: Run API tests
   working-directory: ./api
@@ -770,11 +900,13 @@ env:
 ### Monitoring and Results
 
 #### Pipeline Status Indicators
+
 - ✅ Success: All tests passed
 - ❌ Failure: Test failures detected
 - 🟡 In Progress: Pipeline executing
 
 #### Accessing Build Results
+
 1. Navigate to GitHub repository
 2. Select "Actions" tab
 3. Click desired workflow run
@@ -785,7 +917,9 @@ env:
    - Coverage statistics
 
 ### Pipeline Maintenance
+
 To modify pipeline configuration:
+
 1. Edit `.github/workflows/node-test.yml`
 2. Update test scripts in respective package.json files
 3. Modify environment variables in GitHub Secrets
