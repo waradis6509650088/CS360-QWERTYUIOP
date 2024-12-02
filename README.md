@@ -368,7 +368,7 @@ if [ -d "node_modules" ]; then #Check if node_modules is already exists
     echo "API dependencies are already installed."
 else
     echo "Installing API dependencies..."
-    yarn && yarn seed
+    yarn --force && yarn seed
 fi
 
 # Check if .env file is already exists
@@ -384,6 +384,7 @@ if [ -f ".env" ]; then
 cat <<EOF >> ".env"
 STRAPI_ADMIN_CLIENT_URL=$STRAPI_ADMIN_CLIENT_URL
 STRAPI_ADMIN_CLIENT_PREVIEW_SECRET=$STRAPI_ADMIN_CLIENT_PREVIEW_SECRET
+JWT_SECRET=$JWT_SECRET
 EOF
 
 else
@@ -400,7 +401,7 @@ if [ -d "node_modules" ]; then
     echo "Client dependencies are already installed."
 else
     echo "Installing Client dependencies..."
-    yarn
+    yarn --force
 fi
 
 # Check if .env.development is already in client directory
@@ -507,3 +508,478 @@ chmod +x YOUR_BASH_SCRIPT_FILE
 ```
 
 ![Screenshot 2024-09-24 163409](https://github.com/user-attachments/assets/b17ef25c-fe2f-4094-85b5-000cce77acc2)
+
+
+## Unit and Integration Testing Overview
+
+In this project, we use the following testing tools:
+
+- **Jest**: Primary Testing Framework for Unit Tests
+- **Supertest**: For testing HTTP endpoints in Integration Tests
+- **Strapi Testing Utils**: For simulating Strapi instance in tests
+
+## Setting Up Tests
+
+Run these commands to set up the testing environment:
+
+```bash
+# Install Yarn globally
+npm install -g yarn
+```
+
+```bash
+# Setup API tests
+cd /CS360-QWERTYUIOP/api
+yarn global add jest
+yarn add @babel/runtime
+yarn && yarn seed
+```
+
+```bash
+# Setup Client tests
+cd /CS360-QWERTYUIOP/client
+yarn
+```
+
+## Running Tests
+
+Execute the following commands to run tests:
+
+```bash
+cd /CS360-QWERTYUIOP/api
+```
+
+```bash
+# Run all tests
+yarn test
+
+# Run only unit tests
+yarn test:unit
+
+# Run only integration tests
+yarn test:integration
+
+# Run tests in watch mode
+yarn test:watch
+
+# Run tests with coverage report
+yarn test:coverage
+```
+
+## Test File Structure
+### api test
+```
+api/
+├── __tests__/
+│   ├── unit/
+│   │   └── auth.test.js       # Unit tests 
+│   └── integration/
+│       └── auth.integration.test.js  # Integration tests 
+```
+### client test
+```
+client/
+├── __tests__/
+│   ├── unit/
+│   │   └── addRestaurant.test.js              # unit tests
+│   └── integration/
+│       └── addRestaurant.integration.test.js  # Integration tests 
+```
+
+## Test Coverage
+
+### 1. Unit Tests (auth.test.js)
+
+#### Login Function
+```javascript
+describe('Login Function', () => {
+  it('should successfully login with valid credentials', async () => {
+    // Mock server response with JWT and user data
+    const mockResponse = {
+      jwt: 'mock-token',
+      user: {
+        id: 1,
+        username: 'testuser',
+        email: 'test@example.com'
+      }
+    };
+    // Test implementation
+  });
+});
+```
+
+Coverage includes:
+- POST request to `/api/auth/local`
+- JWT token validation
+- User data validation
+
+#### Registration Function
+```javascript
+it('should register within timeout', async () => {
+  const startTime = Date.now();
+  const result = await register('newuser', 'newuser@example.com', 'password123');
+  const endTime = Date.now();
+  const executionTime = endTime - startTime;
+
+  expect(executionTime).toBeLessThan(timeout);
+  expect(result.jwt).toBe('new-user-token');
+  expect(result.user.username).toBe('newuser');
+});
+```
+
+Coverage includes:
+- Registration request to `/api/auth/local/register`
+- Performance testing of registration process
+- Validation of JWT token and new user data
+
+### 2. Integration Tests (auth.integration.test.js)
+
+#### Authentication Setup
+```javascript
+beforeAll(async () => {
+  strapi = await Strapi().load();
+  await strapi.start();
+  request = supertest(strapi.server.httpServer);
+  
+  // Get Authenticated role
+  authRole = await strapi.query('plugin::users-permissions.role').findOne({
+    where: { type: 'authenticated' },
+  });
+
+  // Create test user
+  await strapi.plugins['users-permissions'].services.user.add({
+    username: 'testuser',
+    email: 'test@example.com',
+    password: 'Password123!',
+    job: 'Customer',
+    role: authRole.id,
+    confirmed: true,
+    provider: 'local',
+    blocked: false,
+  });
+}, 30000);
+```
+
+Coverage includes:
+- Strapi server initialization
+- Test user creation
+- Roles and permissions configuration
+
+#### Login Endpoint Tests
+```javascript
+describe('POST /api/auth/local', () => {
+  it('should login successfully with valid credentials', async () => {
+    const response = await request.post('/api/auth/local').send({
+      identifier: 'test@example.com',
+      password: 'Password123!',
+    });
+    
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('jwt');
+    expect(response.body).toHaveProperty('user');
+  });
+
+  it('should fail login with invalid credentials', async () => {
+    const response = await request.post('/api/auth/local').send({
+      identifier: 'wrong@email.com',
+      password: 'wrongpassword',
+    });
+    
+    expect(response.status).toBe(400);
+    expect(response.body).toHaveProperty('error');
+  });
+});
+```
+### 3. Unit Tests (addRestaurant.test.js)
+This test will include all the function from file: `<project folder>/client/pages/restaurant/add/submit.js`
+
+Coverage includes:
+- initiate api request
+- bad request handling
+- input error handling
+
+## Viewing Test Results
+
+The test results can be viewed in two ways:
+
+1. **Console Output**: When running tests, results appear in the terminal:
+   - ✓ for passed tests
+   - ✕ for failed tests
+   - Detailed error messages for failed tests
+
+2. **Coverage Report**: Run `yarn test:coverage` to view:
+   - Statement coverage
+   - Branch coverage
+   - Function coverage
+   - Line coverage
+
+Example test result output:
+```
+Auth Unit Tests
+    Login Function                                                                                                                                            
+      √ should successfully login with valid credentials (3 ms)                                                                                               
+      √ should handle login failure with invalid credentials (15 ms)                                                                                          
+    Register Function                                                                                                                                         
+      √ should successfully register a new user within timeout (1 ms)                                                                                         
+      √ should handle registration failure with duplicate email (1 ms)
+
+  Auth Integration Tests
+    POST /api/auth/local                                                                                                                                      
+      √ should login successfully with valid credentials (111 ms)                                                                                             
+      √ should fail login with invalid credentials (16 ms)                                                                                                    
+    POST /api/auth/local/register                                                                                                                             
+      √ should successfully register a new user (170 ms)                                                                                                      
+      √ should fail registration with existing email (83 ms)                                                                                                  
+      √ should validate required fields (86 ms)      
+
+-------------------------------------|---------|----------|---------|---------|-------------------                                                            
+File                                 | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                             
+-------------------------------------|---------|----------|---------|---------|-------------------                                                            
+All files                            |   89.87 |    33.33 |   85.71 |   89.47 |                                                                               
+ config                              |     100 |       50 |     100 |     100 |                                                                               
+  admin.js                           |     100 |      100 |     100 |     100 |                                                                               
+  api.js                             |     100 |      100 |     100 |     100 |                   
+  cron-tasks.js                      |     100 |      100 |     100 |     100 | 
+  database.js                        |     100 |       50 |     100 |     100 | 15-40
+  middlewares.js                     |     100 |      100 |     100 |     100 | 
+  plugins.js                         |     100 |      100 |     100 |     100 | 
+  server.js                          |     100 |      100 |     100 |     100 | 
+ src                                 |     100 |      100 |     100 |     100 | 
+  index.js                           |     100 |      100 |     100 |     100 | 
+ src/api/article/controllers         |     100 |      100 |     100 |     100 | 
+  article.js                         |     100 |      100 |     100 |     100 | 
+ src/api/article/routes              |     100 |      100 |     100 |     100 | 
+  article.js                         |     100 |      100 |     100 |     100 | 
+ src/api/article/services            |     100 |      100 |     100 |     100 | 
+  article.js                         |     100 |      100 |     100 |     100 | 
+ src/api/blog-page/controllers       |     100 |      100 |     100 |     100 | 
+  blog-page.js                       |     100 |      100 |     100 |     100 | 
+ src/api/blog-page/routes            |     100 |      100 |     100 |     100 | 
+  blog-page.js                       |     100 |      100 |     100 |     100 | 
+ src/api/blog-page/services          |     100 |      100 |     100 |     100 | 
+  blog-page.js                       |     100 |      100 |     100 |     100 | 
+ src/api/category/controllers        |     100 |      100 |     100 |     100 | 
+  category.js                        |     100 |      100 |     100 |     100 | 
+ src/api/category/routes             |     100 |      100 |     100 |     100 | 
+  category.js                        |     100 |      100 |     100 |     100 | 
+ src/api/category/services           |     100 |      100 |     100 |     100 | 
+  category.js                        |     100 |      100 |     100 |     100 | 
+ src/api/global/controllers          |     100 |      100 |     100 |     100 | 
+  global.js                          |     100 |      100 |     100 |     100 | 
+ src/api/global/routes               |     100 |      100 |     100 |     100 | 
+  global.js                          |     100 |      100 |     100 |     100 | 
+ src/api/global/services             |     100 |      100 |     100 |     100 | 
+  global.js                          |     100 |      100 |     100 |     100 | 
+ src/api/page/controllers            |     100 |      100 |     100 |     100 | 
+  page.js                            |     100 |      100 |     100 |     100 | 
+ src/api/page/routes                 |     100 |      100 |     100 |     100 | 
+  page.js                            |     100 |      100 |     100 |     100 | 
+ src/api/page/services               |     100 |      100 |     100 |     100 | 
+  page.js                            |     100 |      100 |     100 |     100 | 
+ src/api/place/controllers           |     100 |      100 |     100 |     100 | 
+  place.js                           |     100 |      100 |     100 |     100 | 
+ src/api/place/routes                |     100 |      100 |     100 |     100 | 
+  place.js                           |     100 |      100 |     100 |     100 | 
+ src/api/place/services              |     100 |      100 |     100 |     100 | 
+  place.js                           |     100 |      100 |     100 |     100 | 
+ src/api/restaurant-page/controllers |     100 |      100 |     100 |     100 | 
+  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
+ src/api/restaurant-page/routes      |     100 |      100 |     100 |     100 | 
+  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
+ src/api/restaurant-page/services    |     100 |      100 |     100 |     100 | 
+  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
+ src/api/restaurant/controllers      |     100 |      100 |     100 |     100 | 
+  restaurant.js                      |     100 |      100 |     100 |     100 | 
+ src/api/restaurant/routes           |     100 |      100 |     100 |     100 | 
+  restaurant.js                      |     100 |      100 |     100 |     100 | 
+ src/api/restaurant/services         |     100 |      100 |     100 |     100 | 
+  restaurant.js                      |     100 |      100 |     100 |     100 | 
+ src/api/review/controllers          |     100 |      100 |     100 |     100 | 
+  review.js                          |     100 |      100 |     100 |     100 | 
+ src/api/review/routes               |     100 |      100 |     100 |     100 | 
+  review.js                          |     100 |      100 |     100 |     100 | 
+ src/api/review/services             |     100 |      100 |     100 |     100 | 
+  review.js                          |     100 |      100 |     100 |     100 | 
+ src/policies                        |   11.11 |        0 |       0 |   11.11 | 
+  auth.js                            |   11.11 |        0 |       0 |   11.11 | 2-13
+-------------------------------------|---------|----------|---------|---------|-------------------
+
+Test Suites: 2 passed, 2 total
+Tests:       9 passed, 9 total
+Snapshots:   0 total
+Time:        7.714 s, estimated 25 s
+Ran all test suites.
+Done in 8.40s.          
+```
+
+## Adding New Tests
+
+### 1. Unit Tests
+Create new files in `<./api or ./client>/__tests__/unit/` following this pattern:
+
+```javascript
+// xxxx.test.js
+describe('Feature Name', () => {
+  it('should do something specific', () => {
+    // Test implementation
+  });
+});
+```
+
+### 2. Integration Tests
+Create new files in `<./api or ./client>/__tests__/integration/` using Supertest:
+
+```javascript
+// xxxx.integration.test.js
+describe('API Endpoint', () => {
+  it('should handle request correctly', async () => {
+    const response = await request(app)
+      .post('/api/endpoint')
+      .send(data);
+    
+    expect(response.status).toBe(200);
+  });
+});
+```
+
+# Node.js CI Workflow
+
+## Overview
+This repository contains a Node.js continuous integration (CI) workflow that automates testing for both API and client applications across multiple operating systems and Node.js versions.
+
+## Workflow Triggers
+The workflow is triggered on:
+- Push events to `test-feature06` and `develop` branches
+- Pull request events to `develop-feature06`, `develop`, and `main` branches
+
+## CI Environment Matrix
+The workflow runs tests across the following combinations:
+
+### Operating Systems
+- `ubuntu:latest`
+- `debian:latest` 
+- `redhat/ubi8`
+
+### Node.js Versions
+- 16.x
+- 18.x
+
+## Workflow Steps
+
+### 1. Environment Setup
+- Checks out the repository using `actions/checkout@v4`
+- Sets up Node.js using `actions/setup-node@v4`
+- Installs Yarn package manager globally
+
+### 2. API Setup and Testing
+#### Dependencies Installation
+```bash
+# Working directory: ./api
+yarn global add jest
+yarn && yarn seed
+```
+
+#### Environment Configuration
+Creates `.env` file with test secrets:
+```env
+JWT_SECRET=test-jwt-secret
+ADMIN_JWT_SECRET=test-admin-jwt-secret
+```
+
+#### Testing
+- Runs unit tests: `yarn test:unit`
+- Runs integration tests: `yarn test:integration`
+
+### 3. Client Setup and Testing
+#### Dependencies Installation
+```bash
+# Working directory: ./client
+yarn
+```
+
+#### Testing
+- Runs unit tests: `yarn test:unit`
+- Runs integration tests: `yarn test:integration`
+
+## Project Structure
+```
+.
+├── api/                # Backend API application
+│   ├── __tests__/
+│   │   ├── unit/
+│   │   └── integration/
+│   └── package.json
+│
+└── client/            # Frontend client application
+    ├── __tests__/
+    │   ├── unit/
+    │   └── integration/
+    └── package.json
+```
+
+## GitHub Actions Configuration
+This workflow uses the following configuration:
+
+```yaml
+name: Node.js CI
+
+on:
+  push:
+    branches: [ test-feature06 , develop ]
+  pull_request:
+    branches: [ develop-feature06, develop, main ]
+
+jobs:
+
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu:latest', 'debian:latest', 'redhat/ubi8'] 
+        node-version: [16.x , 18.x]
+    
+    runs-on: ubuntu-latest
+    container: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+    
+    - name: Install Yarn
+      run: npm install -g yarn
+    
+    - name: Install api dependencies
+      working-directory: ./api
+      run: |
+        yarn global add jest
+        yarn && yarn seed
+        echo "JWT_SECRET=test-jwt-secret" >> .env
+        echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
+    
+    - name: Install client dependencies
+      working-directory: ./client
+      run: |
+        yarn
+    
+    - name: Run api unit tests
+      working-directory: ./api
+      run: yarn test:unit
+    
+    - name: Run api integration tests
+      working-directory: ./api
+      run: yarn test:integration
+    
+    - name: Run client unit tests
+      working-directory: ./client
+      run: |
+        yarn test:unit
+    
+    - name: Run client integration tests
+      working-directory: ./client
+      run: |
+        yarn test:integration
+```
