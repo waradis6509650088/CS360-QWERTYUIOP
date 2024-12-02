@@ -92,13 +92,3 @@ jobs:
     - name: Run client integration tests
       working-directory: ./client
       run: yarn test:integration
-
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results-${{ matrix.os }}-node-${{ matrix.node-version }}
-        path: |
-          api/coverage
-          client/coverage
-        retention-days: 30
