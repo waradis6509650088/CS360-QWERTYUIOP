@@ -2,58 +2,93 @@ name: Node.js CI
 
 on:
   push:
-    branches: [ test-feature06 , develop ]
+    branches: [ develop, fix-from-feedback ]
   pull_request:
-    branches: [ develop-feature06, develop, main ]
+    branches: [ develop, main ]
 
 jobs:
   tests:
+    name: Run Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    
     strategy:
       fail-fast: false
       matrix:
-        os: ['ubuntu:latest', 'debian:latest', 'redhat/ubi8']
-        node-version: [16.x , 18.x]
-    
-    runs-on: ubuntu-latest
-    container: ${{ matrix.os }}
-    
+        os: [ubuntu-latest]
+        node-version: [16.x]
+
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-    
-    - name: Install Yarn
-      run: npm install -g yarn
 
-    - name: Install api dependencies
-      working-directory: ./api
+    - name: Get API yarn cache directory path
+      id: api-yarn-cache-dir-path
+      run: echo "dir=$(cd api && yarn cache dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache API dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.api-yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-api-${{ hashFiles('api/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-api-
+    - name: Get client yarn cache directory path
+      id: client-yarn-cache-dir-path
+      run: echo "dir=$(cd client && yarn cache dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache client dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.client-yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-client-${{ hashFiles('client/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-client-
+
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
       run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+    - name: Rebuild sqlite3
+      run: npm rebuild sqlite3 --force
+
+    - name: Install global dependencies
+      run: |
+        npm install -g yarn
         yarn global add jest
-        yarn && yarn seed
-        echo "JWT_SECRET=test-jwt-secret" >> .env
-        echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
-    - name: Install client dependencies
-      working-directory: ./client
+
+    - name: Install and configure API
+      working-directory: ./api
+      env:
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
       run: |
-        yarn
-    
-    - name: Run api unit tests
+        yarn install
+        yarn seed
+        echo "JWT_SECRET=${JWT_SECRET}" >> .env
+        echo "ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}" >> .env
+
+    - name: Install client dependencies  
+      working-directory: ./client
+      run: yarn install
+
+    - name: Run API unit tests
       working-directory: ./api
       run: yarn test:unit
-    
-    - name: Run api integration tests
+      
+    - name: Run API integration tests
       working-directory: ./api
       run: yarn test:integration
 
     - name: Run client unit tests
       working-directory: ./client
-      run: |
-        yarn test:unit
-    
+      run: yarn test:unit
+
     - name: Run client integration tests
       working-directory: ./client
-      run: |
-        yarn test:integration
+      run: yarn test:integration
