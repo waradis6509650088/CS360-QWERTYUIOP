@@ -39,8 +39,14 @@ jobs:
           
       - name: Test API
         working-directory: ./api
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
         run: |
           yarn install
+          yarn seed
+          echo "JWT_SECRET=${JWT_SECRET}" >> .env
+          echo "ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}" >> .env
           yarn test:unit
           yarn test:integration
           
