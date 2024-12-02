@@ -351,41 +351,55 @@ Total Test Cases: 32
 
 - Integration Tests: 12 
 
-Here's the corrected breakdown table:
+| Component | Feature | Test Type | Cases | Description |
+|-----------|---------|-----------|--------|-------------|
+| Auth | Login | Unit | 6 | Token validation, response handling, timeout testing |
+| Auth | Login | Integration | 2 | API endpoint testing |
+| Auth | Register | Unit | 6 | Input validation, error handling, performance testing |
+| Auth | Register | Integration | 3 | API endpoint testing |
+| Restaurant | Add | Unit | 8 | Image upload, data validation, error handling |
+| Restaurant | Add | Integration | 7 | API endpoint testing, integration validation |
 
-| Component  | Feature  | Test Type   | Cases | Description                         |
+## Detailed Implementation
 
-| ---------- | -------- | ----------- | ----- | ----------------------------------- |
+### Auth Components
 
-| Auth       | Login    | Unit        | 6     | Token validation, response handling, timeout testing |
+#### Login Tests
+- **Unit Tests (6 cases)**
+  - Token validation
+  - Response format verification
+  - Error handling scenarios
+  - Timeout handling
+  
+- **Integration Tests (2 cases)**
+  - API endpoint validation
+  - Authentication workflow
 
-|            |          | Integration | 2     | API endpoint testing                |
+#### Registration Tests
+- **Unit Tests (6 cases)**
+  - Input validation
+  - Error condition handling
+  - Performance benchmarking
+  
+- **Integration Tests (3 cases)**
+  - Registration workflow validation
+  - User creation verification
+  - Database integration
 
-| Auth       | Register | Unit        | 6     | Input validation, error handling, performance testing |
+### Restaurant Components
 
-|            |          | Integration | 3     | API endpoint testing                |
-
-| Restaurant | Add      | Unit        | 8     | Image upload, data validation, error handling |
-
-|            |          | Integration | 7     | API endpoint testing, integration validation |
-
-### Features Tested
-
-#### Authentication Module
-
-- User login validation
-- Registration process
-- Token generation and validation
-- Error handling
-- Request timeout checks
-
-#### Restaurant Management
-
-- Image upload functionality
-- Data validation
-- API integration
-- Error handling
-- Permission checks
+#### Add Restaurant Feature
+- **Unit Tests (8 cases)**
+  - Image upload validation
+  - Data format verification
+  - Error state handling
+  - Input sanitization
+  
+- **Integration Tests (7 cases)**
+  - API communication
+  - Database integration
+  - Image storage verification
+  - Response validation
 
 ## Setting Up Tests
 
@@ -648,12 +662,9 @@ The test results can be viewed in two ways:
 Recent test execution results:
 
 | Component | Test Suites | Tests | Coverage Details |
-
 |-----------|-------------|-------|------------------|
-
-| API | 2 passed | 9 passed | Statements: 89.77%<br>Branches: 40%<br>Functions: 85.71%<br>Lines: 89.41% |
-
-| Client | 2 passed | 23 passed | Statements: 91.3%<br>Branches: 85%<br>Functions: 100%<br>Lines: 90.76% |
+| API | 2 passed | 9 passed | **Statement**: 89.77%<br>**Branch**: 40%<br>**Function**: 85.71%<br>**Line**: 89.41% |
+| Client | 2 passed | 23 passed | **Statement**: 91.3%<br>**Branch**: 85%<br>**Function**: 100%<br>**Line**: 90.76% |
 
 ### API Coverage Highlights
 
