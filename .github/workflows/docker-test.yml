@@ -1,0 +1,124 @@
+name: CI - Test and Deploy Docker Images
+
+on:
+  push:
+    branches:
+      - main 
+      - develop
+      - fix-from-feedback
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+
+jobs:
+  test-source-code:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          
+      - name: Install Global Dependencies
+        run: |
+          npm install -g yarn
+          yarn global add jest
+          
+      - name: Test API
+        working-directory: ./api
+        run: |
+          yarn install
+          yarn test:unit
+          yarn test:integration
+          
+      - name: Test Client
+        working-directory: ./client
+        run: |
+          yarn install
+          yarn test:unit
+          yarn test:integration
+
+  build-and-push-images:
+    needs: test-source-code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          
+      - name: Build and Push Combined Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:buildcache,mode=max
+
+  test-docker-image:
+    needs: build-and-push-images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }} 
+
+      - name: Pull Docker Image
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:latest
+        
+      - name: Create Test Environment File
+        run: |
+          echo "ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}" > .env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
+          echo "STRAPI_ADMIN_CLIENT_URL=http://localhost:3000" >> .env
+          echo "NEXT_PUBLIC_API_URL=http://localhost:1337" >> .env
+        
+      - name: Run Docker Container
+        run: |
+          docker run -d \
+            --name foodadvisor \
+            -p 1337:1337 \
+            -p 3000:3000 \
+            --env-file .env \
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:latest
+            
+      - name: Wait for Services to Start
+        run: |
+          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:1337/admin)" != "200" ]]; do sleep 5; done' || false
+          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:3000)" != "200" ]]; do sleep 5; done' || false
+        
+      - name: Test API Endpoints
+        run: |
+          curl --fail http://localhost:1337/api/articles
+          curl --fail http://localhost:1337/api/restaurants
+          
+      - name: Clean Up
+        run: |
+          docker stop foodadvisor
+          docker rm foodadvisor
