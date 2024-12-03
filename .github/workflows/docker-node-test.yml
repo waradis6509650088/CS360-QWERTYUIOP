@@ -168,7 +168,7 @@ jobs:
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} \
             ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest \
-            sh -c "mkdir -p /app/api/public/uploads && yarn && yarn seed && yarn test"
+            sh -c "mkdir -p /app/api/public/uploads && yarn && yarn seed && yarn test:unit && yarn test:integration"
 
       - name: Run Client Tests
         run: |
@@ -178,7 +178,7 @@ jobs:
             --network foodadvisor-network \
             -e NEXT_PUBLIC_API_URL=http://test-api:1337 \
             ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest \
-            sh -c "yarn && yarn test"
+            sh -c "yarn && yarn test:unit && yarn test:integration"
 
       - name: Wait for tests to complete
         run: |

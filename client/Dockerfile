@@ -3,7 +3,7 @@ FROM node:16-alpine
 
 WORKDIR /app/client
 
-# Copy package files
+# Copy package files  
 COPY client/package*.json client/yarn.lock ./
 
 # Install dependencies
@@ -11,9 +11,6 @@ RUN yarn install
 
 # Copy client source code
 COPY client/ .
-
-# Build Next.js
-RUN yarn build
 
 EXPOSE 3000
 
