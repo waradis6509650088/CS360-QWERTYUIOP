@@ -1,23 +1,20 @@
 # Use Node.js as the base image
-FROM node:16
+FROM node:16-alpine
 
-# Set working directory inside the container
-WORKDIR /app
+WORKDIR /app/client
 
-# Copy package.json, package-lock.json, and yarn.lock
-COPY package*.json yarn.lock ./
+# Copy package files
+COPY client/package*.json client/yarn.lock ./
 
 # Install dependencies
 RUN yarn install
 
-# Copy application code
-COPY . .
+# Copy client source code
+COPY client/ .
 
-# Build the project (if necessary)
+# Build Next.js
 RUN yarn build
 
-# Expose the port the client runs on
-EXPOSE 8080
+EXPOSE 3000
 
-# Command to run the client application
-CMD ["yarn", "start"]
+CMD ["yarn", "dev"]

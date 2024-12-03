@@ -1,23 +1,23 @@
 # Use Node.js as the base image
-FROM node:16
+FROM node:16-alpine
 
-# Set working directory inside the container
-WORKDIR /app
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ git
 
-# Copy package.json, package-lock.json, and yarn.lock
-COPY package*.json yarn.lock ./
+WORKDIR /app/api
+
+# Copy package files
+COPY api/package*.json api/yarn.lock ./
 
 # Install dependencies
 RUN yarn install
 
-# Copy application code
-COPY . .
+# Copy API source code
+COPY api/ .
 
-# Build the project (if necessary)
+# Build Strapi
 RUN yarn build
 
-# Expose the port the API runs on
 EXPOSE 1337
 
-# Command to run the API application
-CMD ["yarn", "start"]
+CMD ["yarn", "develop"]

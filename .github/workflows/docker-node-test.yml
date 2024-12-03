@@ -122,19 +122,31 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
           
-      - name: Build and Push Combined Image
+      - name: Build and Push API Image
         uses: docker/build-push-action@v4
         with:
           context: .
-          file: ./Dockerfile
+          file: ./api/Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:${{ github.sha }}
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:buildcache,mode=max
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:buildcache,mode=max
+  
+      - name: Build and Push Client Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./client/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:buildcache,mode=max
 
-  test-docker-image:
+  test-docker-images:
     needs: build-and-push-images
     runs-on: ubuntu-latest
     steps:
@@ -142,38 +154,32 @@ jobs:
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }} 
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Pull Docker Image
-        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:latest
-        
-      - name: Create Test Environment File
         run: |
-          echo "ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}" > .env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> .env
-          echo "STRAPI_ADMIN_CLIENT_URL=http://localhost:3000" >> .env
-          echo "NEXT_PUBLIC_API_URL=http://localhost:1337" >> .env
-        
-      - name: Run Docker Container
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest
+          docker pull ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest
+
+      - name: Create Docker network
+        run: docker network create foodadvisor-network
+
+      - name: Run API Tests
         run: |
-          docker run -d \
-            --name foodadvisor \
-            -p 1337:1337 \
-            -p 3000:3000 \
-            --env-file .env \
-            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor:latest
-            
-      - name: Wait for Services to Start
+          docker run --rm \
+            --name test-api \
+            --network foodadvisor-network \
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest \
+            sh -c "yarn test"
+
+      - name: Run Client Tests
         run: |
-          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:1337/admin)" != "200" ]]; do sleep 5; done' || false
-          timeout 300 bash -c 'while [[ "$(curl -s -o /dev/null -w ''%{http_code}'' localhost:3000)" != "200" ]]; do sleep 5; done' || false
-        
-      - name: Test API Endpoints
-        run: |
-          curl --fail http://localhost:1337/api/articles
-          curl --fail http://localhost:1337/api/restaurants
-          
+          docker run --rm \
+            --name test-client \
+            --network foodadvisor-network \
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest \
+            sh -c "yarn test"
+              
       - name: Clean Up
         run: |
-          docker stop foodadvisor
-          docker rm foodadvisor
+          docker network rm foodadvisor-network
