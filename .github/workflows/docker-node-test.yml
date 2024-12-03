@@ -184,8 +184,8 @@ jobs:
         run: |
           docker exec test-api yarn install
           docker exec test-api yarn seed
-          docker exec test-api bash -c 'echo "JWT_SECRET=${JWT_SECRET}" >> .env'
-          docker exec test-api bash -c 'echo "ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}" >> .env'
+          docker exec test-api sh -c "echo JWT_SECRET=${JWT_SECRET} > .env"
+          docker exec test-api sh -c "echo ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET} >> .env"
 
       - name: Install client dependencies
         run: |
