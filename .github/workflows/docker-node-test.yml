@@ -159,40 +159,63 @@ jobs:
       - name: Create Docker network
         run: docker network create foodadvisor-network
 
-      - name: Start API container
+      - name: Start API container for tests
         run: |
           docker run -d \
             --name test-api \
             --network foodadvisor-network \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} \
-            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest
+            -e NODE_ENV=test \
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest \
+            sh -c "yarn install"
 
-      - name: Start Client container
+      - name: Start Client container for tests
         run: |
           docker run -d \
             --name test-client \
             --network foodadvisor-network \
             -e NEXT_PUBLIC_API_URL=http://test-api:1337 \
-            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest
+            -e NODE_ENV=test \
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest \
+            sh -c "yarn install"
 
-      - name: Install API dependencies
-        run: docker exec test-api yarn install
+      - name: Wait for containers to be ready
+        run: |
+          docker exec test-api sh -c "until yarn seed; do sleep 2; done"
+          sleep 5
 
       - name: Run API unit tests
-        run: docker exec test-api yarn test:unit
+        run: |
+          docker exec \
+            -e NODE_ENV=test \
+            test-api yarn test:unit
 
       - name: Run API integration tests
-        run: docker exec test-api yarn test:integration
-
-      - name: Install client dependencies
-        run: docker exec test-client yarn install
+        run: |
+          docker exec \
+            -e NODE_ENV=test \
+            test-api yarn test:integration
 
       - name: Run client unit tests
-        run: docker exec test-client yarn test:unit
+        run: |
+          docker exec \
+            -e NODE_ENV=test \
+            test-client yarn test:unit
 
       - name: Run client integration tests
-        run: docker exec test-client yarn test:integration
+        run: |
+          docker exec \
+            -e NODE_ENV=test \
+            test-client yarn test:integration
+
+      - name: Display test logs on failure
+        if: failure()
+        run: |
+          echo "API Container Logs:"
+          docker logs test-api
+          echo "Client Container Logs:"
+          docker logs test-client
 
       - name: Clean Up
         if: always()
