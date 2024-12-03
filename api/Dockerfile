@@ -1,23 +1,26 @@
 # Use Node.js as the base image
-FROM node:16
+FROM node:16-alpine
 
-# Set working directory inside the container
-WORKDIR /app
+WORKDIR /app/api
 
-# Copy package.json, package-lock.json, and yarn.lock
-COPY package*.json yarn.lock ./
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ git
+
+# Copy package files
+COPY api/package*.json api/yarn.lock ./
 
 # Install dependencies
 RUN yarn install
 
-# Copy application code
-COPY . .
+# Copy API source code
+COPY api/ .
 
-# Build the project (if necessary)
-RUN yarn build
+# Create uploads directory
+RUN mkdir -p public/uploads
 
-# Expose the port the API runs on
+# Set environment for testing
+ENV NODE_ENV=test
+
 EXPOSE 1337
 
-# Command to run the API application
-CMD ["yarn", "start"]
+CMD ["yarn", "develop"]
