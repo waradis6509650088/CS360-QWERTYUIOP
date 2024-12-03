@@ -168,7 +168,7 @@ jobs:
             -e ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} \
             -e NODE_ENV=test \
             ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest \
-            sh -c "yarn install"
+            tail -f /dev/null
 
       - name: Start Client container for tests
         run: |
@@ -178,36 +178,30 @@ jobs:
             -e NEXT_PUBLIC_API_URL=http://test-api:1337 \
             -e NODE_ENV=test \
             ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest \
-            sh -c "yarn install"
+            tail -f /dev/null
 
-      - name: Wait for containers to be ready
+      - name: Install and configure API
         run: |
-          docker exec test-api sh -c "until yarn seed; do sleep 2; done"
-          sleep 5
+          docker exec test-api yarn install
+          docker exec test-api yarn seed
+          docker exec test-api bash -c 'echo "JWT_SECRET=${JWT_SECRET}" >> .env'
+          docker exec test-api bash -c 'echo "ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}" >> .env'
+
+      - name: Install client dependencies
+        run: |
+          docker exec test-client yarn install
 
       - name: Run API unit tests
-        run: |
-          docker exec \
-            -e NODE_ENV=test \
-            test-api yarn test:unit
+        run: docker exec test-api yarn test:unit
 
       - name: Run API integration tests
-        run: |
-          docker exec \
-            -e NODE_ENV=test \
-            test-api yarn test:integration
+        run: docker exec test-api yarn test:integration
 
       - name: Run client unit tests
-        run: |
-          docker exec \
-            -e NODE_ENV=test \
-            test-client yarn test:unit
+        run: docker exec test-client yarn test:unit
 
       - name: Run client integration tests
-        run: |
-          docker exec \
-            -e NODE_ENV=test \
-            test-client yarn test:integration
+        run: docker exec test-client yarn test:integration
 
       - name: Display test logs on failure
         if: failure()
