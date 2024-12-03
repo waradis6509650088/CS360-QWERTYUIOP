@@ -9,7 +9,7 @@ import Container from '../../../components/shared/Container';
 import Header from '../../../components/shared/Header';
 import { getData, getRestaurants, getStrapiURL } from '../../../utils';
 import { getLocalizedParams } from '../../../utils/localize';
-import { findImgIdByName, imageUpload, createImgIdArray, postRestaurant } from './_submit.js'
+import { findImgIdByName, imageUpload, createImgIdArray, postRestaurant } from '../../../utils/submit.js'
 import slugify from 'slugify';
 import Router from 'next/router'
 
