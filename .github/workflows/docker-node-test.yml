@@ -159,49 +159,40 @@ jobs:
       - name: Create Docker network
         run: docker network create foodadvisor-network
 
-      - name: Run API Tests
+      - name: Start API container
         run: |
-          # Create container with proper setup
           docker run -d \
             --name test-api \
             --network foodadvisor-network \
             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
             -e ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} \
-            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest \
-            sh -c "mkdir -p /app/api/public/uploads && yarn && yarn seed && yarn test:unit && yarn test:integration"
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest
 
-      - name: Run Client Tests
+      - name: Start Client container
         run: |
-          # Create container with proper setup and dependencies
           docker run -d \
             --name test-client \
             --network foodadvisor-network \
             -e NEXT_PUBLIC_API_URL=http://test-api:1337 \
-            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest \
-            sh -c "yarn && yarn test:unit && yarn test:integration"
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest
 
-      - name: Wait for tests to complete
-        run: |
-          # Wait for containers to finish and check exit codes
-          docker wait test-api
-          docker wait test-client
-          
-          # Check API container logs
-          echo "API Test Logs:"
-          docker logs test-api
-          
-          # Check Client container logs  
-          echo "Client Test Logs:"
-          docker logs test-client
-          
-          # Check exit codes
-          API_EXIT=$(docker inspect test-api --format='{{.State.ExitCode}}')
-          CLIENT_EXIT=$(docker inspect test-client --format='{{.State.ExitCode}}')
-          
-          if [ "$API_EXIT" != "0" ] || [ "$CLIENT_EXIT" != "0" ]; then
-            echo "Tests failed"
-            exit 1
-          fi
+      - name: Install API dependencies
+        run: docker exec test-api yarn install
+
+      - name: Run API unit tests
+        run: docker exec test-api yarn test:unit
+
+      - name: Run API integration tests
+        run: docker exec test-api yarn test:integration
+
+      - name: Install client dependencies
+        run: docker exec test-client yarn install
+
+      - name: Run client unit tests
+        run: docker exec test-client yarn test:unit
+
+      - name: Run client integration tests
+        run: docker exec test-client yarn test:integration
 
       - name: Clean Up
         if: always()
