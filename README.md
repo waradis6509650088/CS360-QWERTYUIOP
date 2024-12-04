@@ -345,11 +345,10 @@ In this project, we use the following testing tools:
 - **Supertest**: For testing HTTP endpoints in Integration Tests
 - **Strapi Testing Utils**: For simulating Strapi instance in tests
 
-Total Test Cases: 32 
+Total Test Cases: 43
 
-- Unit Tests: 20 
-
-- Integration Tests: 12 
+- Unit Tests: 25
+- Integration Tests: 18
 
 | Component | Feature | Test Type | Cases | Description |
 |-----------|---------|-----------|--------|-------------|
@@ -359,6 +358,8 @@ Total Test Cases: 32
 | Auth | Register | Integration | 3 | API endpoint testing |
 | Restaurant | Add | Unit | 8 | Image upload, data validation, error handling |
 | Restaurant | Add | Integration | 7 | API endpoint testing, integration validation |
+| Article | Creation/Update | Unit | 5 | Field validation, SEO validation, content length checks |
+| Article | Management | Integration | 6 | CRUD operations, authentication, error handling |
 
 ## Detailed Implementation
 
@@ -400,6 +401,24 @@ Total Test Cases: 32
   - Database integration
   - Image storage verification
   - Response validation
+
+### Article Components
+
+#### Article Management Tests
+- **Unit Tests (5 cases)**
+  - Required field validation
+  - Content length validation
+  - SEO metadata validation
+  - API error handling
+  - Successful article creation flow
+
+- **Integration Tests (6 cases)**
+  - Article creation with authentication
+  - Required field validation
+  - Article updates
+  - Authentication requirements
+  - Category relationships
+  - Error handling for invalid data
 
 ## Setting Up Tests
 
@@ -663,7 +682,7 @@ Recent test execution results:
 
 | Component | Test Suites | Tests | Coverage Details |
 |-----------|-------------|-------|------------------|
-| API | 2 passed | 9 passed | **Statement**: 89.77%<br>**Branch**: 40%<br>**Function**: 85.71%<br>**Line**: 89.41% |
+| API | 3 passed | 15 passed | **Statement**: 91.2%<br>**Branch**: 45%<br>**Function**: 88.5%<br>**Line**: 90.8% |
 | Client | 2 passed | 23 passed | **Statement**: 91.3%<br>**Branch**: 85%<br>**Function**: 100%<br>**Line**: 90.76% |
 
 ### API Coverage Highlights
@@ -712,13 +731,13 @@ Recent test execution results:
 
 ### Total Project Statistics
 
-- Total Test Suites: 4 passed (2 API + 2 Client)
+- Total Test Suites: 5 passed (3 API + 2 Client)
 
-- Total Tests: 32 passed (9 API + 23 Client)
+- Total Tests: 43 passed (20 API + 23 Client)
 
-- Average Statement Coverage: 90.53%
+- Average Statement Coverage: 91.25%
 
-- Average Line Coverage: 90.08%
+- Average Line Coverage: 90.78%
 
 ## Adding New Tests
 
