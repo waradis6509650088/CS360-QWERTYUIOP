@@ -1,4 +1,4 @@
-name: CD - Deploy to EC2 with Docker (Human trigger)
+name: CD - Deploy to AWS
 
 on:
   push:
@@ -9,126 +9,209 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-image-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      # Step 1: Checkout code
-      - name: Checkout Repository
-        uses: actions/checkout@v3    
-        
-      # Step 2: Check if Docker Image Exists for API
-      - name: Check if Docker Image Exists API
-        id: check_image_API
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Validate AWS Resources
         run: |
-          REPOSITORYAPI="${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api"  
-          TAG="latest"
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" https://hub.docker.com/v2/repositories/${REPOSITORYAPI}/tags/${TAG}/)
-          if [ "$RESPONSE" -ne 200 ]; then
-              echo "Docker image not found. Exiting workflow."
-              exit 1
-          fi
-          echo "Docker image exists. Proceeding to deployment."
+          # Validate key pair
+          KP_NAME="${{ secrets.AWS_KP_NAME }}"
+          aws ec2 describe-key-pairs --key-names $KP_NAME --query 'KeyPairs[0].KeyName' --output text || {
+            echo "Key pair not found"
+            exit 1
+          }
+          
+          # Validate security group
+          SG_ID="${{ secrets.AWS_SG_ID }}"
+          aws ec2 describe-security-groups --group-ids $SG_ID --query 'SecurityGroups[0].IpPermissions[?FromPort==`22`]' --output text || {
+            echo "Security group missing SSH access rule"
+            exit 1
+          }
 
-      # Step 3: Check if Docker Image Exists for Client
-      - name: Check if Docker Image Exists Client
-        id: check_image_client
-        run: |
-          REPOSITORYCLIENT="${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client"
-          TAG="latest"
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -u "${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_TOKEN }}" https://hub.docker.com/v2/repositories/${REPOSITORYCLIENT}/tags/${TAG}/)
-          if [ "$RESPONSE" -ne 200 ]; then
-              echo "Docker image not found. Exiting workflow."
-              exit 1
-          fi
-          echo "Docker image exists. Proceeding to deployment."
-
-      # Step 4: Set AWS Credentials in Environment Variables
-      - name: Set AWS Credentials
-        if: ${{ steps.check_image_API.outcome == 'success' && steps.check_image_client.outcome == 'success' }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-        run: echo "AWS credentials set."
-
-     # Step 5: Create EC2 Instance and Deploy the Application
-      - name: Create EC2 Instance and Deploy the Application
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
+      - name: Create EC2 instance
+        id: create-ec2
         run: |
           INSTANCE_ID=$(aws ec2 run-instances \
-            --image-id ami-06b21ccaeff8cd686 \
+            --image-id ami-0230bd60aa48260c6 \
             --instance-type t2.medium \
             --key-name ${{ secrets.AWS_KP_NAME }} \
             --security-group-ids ${{ secrets.AWS_SG_ID }} \
             --user-data file://user-data.sh \
+            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=FoodAdvisor-Production}]' \
             --query 'Instances[0].InstanceId' \
             --output text)
-
-          echo "Instance ID: $INSTANCE_ID"
-
-          # Wait for EC2-Instance to be running
-          aws ec2 wait instance-running --instance-ids $INSTANCE_ID
-
-          # Output the instance public DNS
-          INSTANCE_PUBLIC_DNS=$(aws ec2 describe-instances \
-            --instance-ids $INSTANCE_ID \
-            --query 'Reservations[0].Instances[0].PublicDnsName' \
-            --output text)
-          echo "Instance Public DNS: $INSTANCE_PUBLIC_DNS"
-          echo "INSTANCE_PUBLIC_DNS=$INSTANCE_PUBLIC_DNS" >> $GITHUB_ENV
-
-          # Output the instance public IPv4
-          INSTANCE_PUBLIC_IPV4=$(aws ec2 describe-instances \
+          
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+          
+          # Wait for instance to be running
+          aws ec2 wait instance-running --instance-ids ${INSTANCE_ID}
+          
+          # Get public IP
+          PUBLIC_IP=$(aws ec2 describe-instances \
             --instance-ids $INSTANCE_ID \
             --query 'Reservations[0].Instances[0].PublicIpAddress' \
             --output text)
-          echo "Instance Public IPv4: $INSTANCE_PUBLIC_IPV4"
-          echo "INSTANCE_PUBLIC_IPV4=$INSTANCE_PUBLIC_IPV4" >> $GITHUB_ENV
-          sleep 5
+            
+          echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
-      # Step 6: Connect to EC2 Instance and Deploy API & CLIENT
-      - name: Connect server and pull image Frontend/Backend
+      - name: Setup SSH and deployment files
         env:
-          PRIVATE_KEY: ${{ secrets.AWS_PRIVATE_KEY }}
-          INSTANCE_PUBLIC_IPV4: ${{ env.INSTANCE_PUBLIC_IPV4 }}
-          INSTANCE_PUBLIC_DNS: ${{ env.INSTANCE_PUBLIC_DNS }}
-          REPOSITORYAPI: ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api
-          REPOSITORYCLIENT: ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client
+          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
+          PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
         run: |
-          echo "$PRIVATE_KEY" > private_key 
-          chmod 600 private_key
-          echo "SSH User: ${{secrets.SSH_USER }}"
-          echo "EC2 Instance DNS: ${{ env.INSTANCE_PUBLIC_DNS }}"
-          ssh -o StrictHostKeyChecking=no -i private_key ${{ secrets.SSH_USER }}@${{ env.INSTANCE_PUBLIC_DNS }} << EOF
-          sudo yum install -y docker
-          sudo systemctl start docker
-
-          echo "Deploying API"
-          sudo docker pull $REPOSITORYAPI:latest
-          sudo docker run -d --name foodadvisor-api \
-            -p 1337:1337 \
-            -e HOST=0.0.0.0 \
-            -e PORT=1337 \
-            -e DATABASE_CLIENT=sqlite \
-            -e DATABASE_FILENAME=.tmp/data.db \
-            -e STRAPI_ADMIN_CLIENT_URL=http://${INSTANCE_PUBLIC_IPV4}:3000 \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -e ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} \
-            $REPOSITORYAPI:latest
-
-          echo "Deploying Client"
-          sudo docker pull $REPOSITORYCLIENT:latest
-          sudo docker run -d --name foodadvisor-client \
-            -p 3000:3000 \
-            -e NEXT_PUBLIC_API_URL=http://${INSTANCE_PUBLIC_IPV4}:1337 \
-            $REPOSITORYCLIENT:latest  
-
-          echo "Deployed API: http://${INSTANCE_PUBLIC_IPV4}:1337/"
-          echo "Deployed Client: http://${INSTANCE_PUBLIC_IPV4}:3000/"
+          # Create SSH directory
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
+          # Save and secure private key
+          echo "$PRIVATE_KEY" | sed 's/\\n/\n/g' > private_key.pem
+          chmod 600 private_key.pem
+          
+          # Add host key scanning
+          ssh-keyscan -H ${INSTANCE_IP} >> ~/.ssh/known_hosts
+          
+          # Create deployment directory
+          mkdir -p deployment
+          
+          # Copy necessary files
+          cp docker-compose.yml deployment/
+          
+          # Create environment file
+          cat << EOF > deployment/.env
+          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
+          PREVIEW_SECRET=$(openssl rand -hex 32)
+          PUBLIC_IP=${INSTANCE_IP}
           EOF
+
+      - name: Wait for SSH availability
+        env:
+          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
+        run: |
+          echo "Waiting for SSH to become available..."
+          timeout 300s bash -c '
+            until ssh -i private_key.pem \
+                    -o StrictHostKeyChecking=no \
+                    -o UserKnownHostsFile=/dev/null \
+                    ec2-user@${INSTANCE_IP} echo "SSH connection successful"
+            do
+              echo "Retrying SSH connection..."
+              sleep 10
+            done
+          '
+
+      - name: Deploy using Docker Compose
+        env:
+          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
+        run: |
+          # Copy deployment files
+          scp -i private_key.pem \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -r deployment/* ec2-user@${INSTANCE_IP}:~/
+          
+          # Deploy application
+          ssh -i private_key.pem \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              ec2-user@${INSTANCE_IP} '
+            # Start deployment
+            echo "Starting deployment process..."
+            
+            # Pull latest images
+            if ! docker-compose pull; then
+              echo "Failed to pull Docker images"
+              exit 1
+            fi
+            
+            # Start containers
+            if ! docker-compose up -d; then
+              echo "Failed to start containers"
+              exit 1
+            fi
+            
+            # Verify containers are running
+            if ! docker-compose ps | grep "Up"; then
+              echo "Containers failed to start properly"
+              exit 1
+            fi
+            
+            echo "Deployment successful"
+          '
+
+      - name: Monitor Deployment Health
+        env:
+          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
+        run: |
+          # Function to check endpoint health
+          check_health() {
+            local url=$1
+            local max_attempts=30
+            local attempt=1
+            
+            while [ $attempt -le $max_attempts ]; do
+              if curl -s -f "$url" > /dev/null; then
+                echo "Service at $url is healthy"
+                return 0
+              fi
+              echo "Attempt $attempt: Service at $url not ready..."
+              sleep 10
+              attempt=$((attempt + 1))
+            done
+            echo "Service at $url failed health check"
+            return 1
+          }
+          
+          echo "Starting health checks..."
+          
+          # Check API health
+          if ! check_health "http://${INSTANCE_IP}:1337/admin"; then
+            echo "API failed to start"
+            exit 1
+          fi
+          
+          # Check Client health
+          if ! check_health "http://${INSTANCE_IP}:3000"; then
+            echo "Client failed to start"
+            exit 1
+          fi
+          
+          echo "Deployment successful and healthy"
+          echo "API URL: http://${INSTANCE_IP}:1337"
+          echo "Client URL: http://${INSTANCE_IP}:3000"
+
+      - name: Cleanup on failure
+        if: failure()
+        env:
+          INSTANCE_ID: ${{ steps.create-ec2.outputs.instance_id }}
+          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
+        run: |
+          echo "Deployment failed, starting cleanup..."
+          
+          # Try to stop containers if SSH is available
+          ssh -i private_key.pem \
+              -o StrictHostKeyChecking=no \
+              -o UserKnownHostsFile=/dev/null \
+              -o ConnectTimeout=10 \
+              ec2-user@${INSTANCE_IP} '
+            docker-compose down || true
+          ' || true
+          
+          # Terminate the EC2 instance
+          aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+          aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
+          
+          echo "Cleanup completed"
