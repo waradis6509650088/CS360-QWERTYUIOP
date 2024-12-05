@@ -1,7 +1,12 @@
 import delve from 'dlv';
 import Link from 'next/link';
 
-const Nav = ({ links, locale }) => {
+const Nav = ({ links = [], locale }) => {  // Add default empty array for links
+  // Add validation check
+  if (!Array.isArray(links)) {
+    return null;
+  }
+
   return (
     <nav className="text-xl mx-auto flex flex-wrap p-5 flex-col md:flex-row items-center">
       {links.map((link, index) => (
@@ -16,6 +21,11 @@ const Nav = ({ links, locale }) => {
       ))}
     </nav>
   );
+};
+
+Nav.defaultProps = {
+  links: [],
+  locale: 'en'
 };
 
 export default Nav;

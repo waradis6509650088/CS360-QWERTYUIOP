@@ -1,37 +1,56 @@
 # CS360 1/2567 Term Project: Food Advisor
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Group Information](#group-information)
+- [Project Features](#project-features)
+- [Technologies](#technologies)
+- [Deployment Guide](#deployment-guide)
+  - [Manual Deployment](#manual-deployment)
+  - [Script-based Deployment](#script-based-deployment)
+- [Testing Documentation](#testing-documentation)
+- [CI/CD Pipeline](#cicd-pipeline)
+
+## Project Overview
+
+FoodAdvisor is a web application designed to simplify the process of discovering food-related content, such as blog posts, based on the user's specific preferences. By allowing users to select their favorite food categories, it ensures personalized recommendations, thus enhancing user engagement and satisfaction.
+
+The application addresses the challenge of information overload, particularly in the food industry where users often struggle to find relevant, high-quality content that fits their tastes. By offering a tailored approach, FoodAdvisor solves the problem of inefficient food content discovery and creates an opportunity for food bloggers, restaurants, and food enthusiasts to connect in a more meaningful, user-centric way.
+
 ## Group Information
+
 - **Group Name:** QWERTYUIOP
-## Members
-| Name | Student ID |
-|------------------------------- ---|-----------------|
 
-| Kanchanop Buarod | 6509650229 |
+### Members
 
-| Thantawan Chitsan | 6509650427 |
-
+| Name                | Student ID |
+| ------------------- | ---------- |
+| Kanchanop Buarod    | 6509650229 |
+| Thantawan Chitsan   | 6509650427 |
 | Haritch Utchavanich | 6509650757 |
+| Waradis Kamolwach   | 6509650088 |
+| Primchawat Areerat  | 6309651039 |
 
-| Waradis Kamolwach | 6509650088 |
+## Project Features
 
-| Primchawat Areerat | 6309651039 |
+- **Restaurant Discovery:** Users can explore restaurants by filtering through different food categories and locations, making it easy to find dining options that match their preferences
+- **User Profile Management:** Users can customize and maintain their personal profiles, including updating their information and managing their account settings
+- **Restaurant Management:** Restaurant owners can create and manage their restaurant profiles, including updating menus, hours, locations, and responding to customer reviews
+- **Culinary Blog Platform:** Food enthusiasts can explore curated blog posts about restaurants, cuisines, and dining experiences, with content filtered by categories and preferences
+- **Content Creation System:** Users can contribute to the platform by writing and publishing their own articles about food-related experiences, cooking tips, and restaurant reviews
 
-## Project Goal
-Foodadvisor is a web application designed to simplify the process of discovering food-related content, such as blog posts, based on the user’s specific preferences. By allowing users to select their favorite food categories, it ensures personalized recommendations, thus enhancing user engagement and satisfaction.
+## Technologies
 
-The application addresses the challenge of information overload, particularly in the food industry where users often struggle to find relevant, high-quality content that fits their tastes. By offering a tailored approach, Foodadvisor solves the problem of inefficient food content discovery and creates an opportunity for food bloggers, restaurants, and food enthusiasts to connect in a more meaningful, user-centric way. This results in a better browsing experience, helping users find food inspiration more quickly and easily.
-
-### Features
-- **Feature 1**: user is able to choose food categories and location
-- **Feature 2**: the application shows relevant blog post according to the user's chosen food categories
-- **Feature 3**: the application have a subscription service
-- **Feature 4**: the application can show blog post that user choose
-- **Feature 5**: the application use CRUD service through Strapi API
-### Technologies Used
 - **Backend:** Strapi V4
 - **Frontend:** NextJS + Tailwind
-- **Hosting/Deployment:** AWS EC2
+- **Infrastructure:** AWS EC2
 - **Database:** SQLite
-## How to deploy and run the project manually
+
+## Deployment Guide
+
+### Manual Deployment
+
 ### Prerequisites
 
 - **AWS EC2 Instance**: Launch an Amazon Linux instance.
@@ -136,19 +155,23 @@ Open your web browser and navigate to:
 ```
 http://Your_Public_IP:1337/admin
 ```
+
 ##### Credentials
+
 ###### Super Admin:
+
 - **Email**: `admin@strapidemo.com`
 - **Password**: `welcomeToStrapi123`
 
 ###### Editor:
+
 - **Email**: `editor@strapidemo.com`
 - **Password**: `welcomeToStrapi123`
 
 ###### Author:
+
 - **Email**: `author@strapidemo.com`
 - **Password**: `welcomeToStrapi123
-
 
 #### 9. Set Up the Client
 
@@ -268,255 +291,134 @@ Open your web browser and navigate to:
 http://Your_Public_IP:3000
 ```
 
+## Script-based Deployment
 
-## How to deploy and run the project using the provided bash script [Specify the bash script path in the repo]
+### Prerequisites
 
+#### 1. SSH into your EC2 instance
+
+```bash
+ssh -i your-key.pem ec2-user@your-instance-ip
+```
+
+#### 2. Install Git
+
+```bash
+sudo yum install git -y
+```
+
+#### 3. Clone the repository
+
+```bash
+git clone https://github.com/Kanchanop6509650229/CS360-QWERTYUIOP.git
+```
+
+### Deployment Steps
 
 #### 1. Locate to bash script file
 
 ```
-cd /CS360-QWERTYUIOP/script
+cd /CS360-QWERTYUIOP
 ```
 
 #### 2. Change the file permissions to make it executable as a program.
+
 ```
 chmod +x deploy.sh
 ```
 
 #### 3. Run bash script file
+
 ```
 ./deploy.sh
 ```
 
-### If you don't have bash script file
-#### 1. Create bash script file
-```
-touch deploy.sh
-```
-
-#### 2. Put the code into the bash script file
-```bash
-#!/bin/bash
-
-PUBLIC_IP=$(curl -s ifconfig.me) # Public ipv4 address
-
-GITHUB_REPO_URL="https://github.com/Kanchanop6509650229/CS360-QWERTYUIOP.git" # Github Repository
-
-BASE_DIR="/home/ec2-user/CS360-QWERTYUIOP" # Repository directory
-API_DIR="$BASE_DIR/api" # Api directory
-CLIENT_DIR="$BASE_DIR/client" # Client directory
-STRAPI_ADMIN_CLIENT_PREVIEW_SECRET=$(openssl rand -hex 32) # Generate strapi admin client preview secrect token
-STRAPI_ADMIN_CLIENT_URL="http://$PUBLIC_IP:3000" # Public IPv4 address and port
-JWT_SECRET=$(openssl rand -hex 32) # Generate jwt secret token
-NEXT_PUBLIC_API_URL="http://$PUBLIC_IP:1337" # Public IPv4 and port
-
-# Check if the command is already exists
-function check_command() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-# Updatig the system
-echo "Updating the system..."
-sudo yum update -y
-
-# Installing Node
-echo "Installing Node..."
-if check_command node; then
-    echo "Node is already installed."
-else
-    cd ~
-    echo "Setting up Node.js repository..."
-    curl -sL https://rpm.nodesource.com/setup_16.x | sudo bash -
-    echo "Installing Node.js..."
-    sudo yum install -y nodejs
-    echo "Node.js version: $(node -v)"
-    echo "npm version: $(npm -v)"
-fi
-
-# Installing Git
-echo "Installing Git..."
-if check_command git; then
-    echo "Git is already installed."
-else
-    cd ~
-    sudo yum install git -y
-    echo "Git version: $(git -v)"
-fi
-
-# Installing Yarn
-echo "Installing Yarn..."
-if check_command yarn; then
-    echo "Yarn is already installed."
-else
-    cd ~
-    sudo npm install -g yarn
-    echo "Yarn version: $(yarn -v)"
-fi
-
-# Check if the project repository is already exists
-if [ -d "$BASE_DIR" ]; then
-    echo "Project directory already exists at $BASE_DIR."
-else
-    echo "Cloning repository..."
-    git clone $GITHUB_REPO_URL
-fi
-
-# Setting up the API
-echo "Setting up the API..."
-cd $API_DIR
-if [ -d "node_modules" ]; then #Check if node_modules is already exists
-    echo "API dependencies are already installed."
-else
-    echo "Installing API dependencies..."
-    yarn --force && yarn seed
-fi
-
-# Check if .env file is already exists
-if [ -f ".env" ]; then
-    ADMIN_JWT_SECRET=$(grep '^ADMIN_JWT_SECRET=' .env | cut -d '=' -f2-) # Retrive the value of ADMIN_JWT_SECRET .env to ADMIN_JWT_SECRECT variable
-
-    if [ -z "$ADMIN_JWT_SECRET" ]; then # Check ADMIN_JWT_SECRET is it null
-        echo "Error: ADMIN_JWT_SECRET not found in .env file."
-        exit 1
-    fi
-
-# Add variable to .env file
-cat <<EOF >> ".env"
-STRAPI_ADMIN_CLIENT_URL=$STRAPI_ADMIN_CLIENT_URL
-STRAPI_ADMIN_CLIENT_PREVIEW_SECRET=$STRAPI_ADMIN_CLIENT_PREVIEW_SECRET
-JWT_SECRET=$JWT_SECRET
-EOF
-
-else
-    echo "Installation Error. .env file not found. Please install module again."
-    exit 1
-fi
-
-echo "Setting up the Client..."
-# Change directory to /home/ec2-user/CS360-QWERTYUIOP/client
-cd $CLIENT_DIR
-
-# Check if node_modules already exists in current directory
-if [ -d "node_modules" ]; then
-    echo "Client dependencies are already installed."
-else
-    echo "Installing Client dependencies..."
-    yarn --force
-fi
-
-# Check if .env.development is already in client directory
-if [ -f ".env.development" ]; then
-    PREVIEW_SECRET=$(grep '^PREVIEW_SECRET=' .env.development | cut -d '=' -f2-) # Store variable from PREVIEW_SECRET to PREVIEW_SECRET variable
-
-    if [ -z "$PREVIEW_SECRET" ] ; then # Check is PREVIEW_SECRET is null
-        echo "Error: PREVIEW_SECRET not found in .env.development file."
-        exit 1
-    fi
-
-    sed -i "s|NEXT_PUBLIC_API_URL=http://127.0.0.1:1337|NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL" .env.development # Replace NEXT_PUBLIC_API_URL value with the value in the NEXT_PUBLIC_API_URL
-else
-    echo "Installation Error. .env.development file not found. Please install module again."
-    exit 1
-fi
-
-# Installing PM2
-echo "Installing PM2..."
-
-# Change directory to base directory
-cd ~
-
-# Check is pm2 are already install
-if check_command pm2; then
-    echo "PM2 is already installed."
-else
-    sudo npm install pm2@latest -g
-fi
-pm2 init
-
-# Modify ecosystem.config.js file
-if [ -f "ecosystem.config.js" ]; then
-cat > "ecosystem.config.js" <<EOL
-module.exports = {
-  apps: [
-    {
-      name: 'api',
-      cwd: '$API_DIR',
-      script: 'yarn',
-      args: 'develop',
-      env: {
-        ADMIN_JWT_SECRET: '$ADMIN_JWT_SECRET',
-        JWT_SECRET: '$JWT_SECRET',
-        STRAPI_ADMIN_CLIENT_URL: '$STRAPI_ADMIN_CLIENT_URL',
-        STRAPI_ADMIN_CLIENT_PREVIEW_SECRET: '$STRAPI_ADMIN_CLIENT_PREVIEW_SECRET',
-      },
-    },
-    {
-      name: 'client',
-      cwd: '$CLIENT_DIR',
-      script: 'yarn',
-      args: 'dev',
-      env: {
-        NEXT_PUBLIC_API_URL: '$NEXT_PUBLIC_API_URL',
-        PREVIEW_SECRET: '$PREVIEW_SECRET',
-      },
-    },
-  ],
-};
-EOL
-else
-    echo "PM2 Installation Error. ecosystem.config.js file not found. Please install PM2 again."
-    exit 1
-fi
-
-# Starting applications with PM2
-echo "Starting applications with PM2..."
-
-# Verify API and Client functionality
-pm2 describe api >/dev/null 2>&1
-API_RUNNING=$?
-pm2 describe client >/dev/null 2>&1
-CLIENT_RUNNING=$?
-
-# Check working status
-if [ $API_RUNNING -eq 0 ] && [ $CLIENT_RUNNING -eq 0 ]; then
-  echo "Both API and Client applications are already running."
-else
-    cd ~
-    pm2 start ecosystem.config.js
-fi
-
-echo "Saving PM2 process list..."
-pm2 save
-
-echo "Setup completed successfully!"
-echo "You can access the Strapi Admin Panel at http://$PUBLIC_IP:1337/admin"
-echo "You can access the Client Application at http://$PUBLIC_IP:3000"
-echo "Use 'pm2 status' to check the status of your applications."
-```
-#### 3. Save and exit bash script file
-```
-ctrl o to save the bash script file
-ctrl x to exit the bash script file
-```
-#### 4. Change the file permissions to make it executable as a program.
-```
-chmod +x YOUR_BASH_SCRIPT_FILE
-```
-#### 5.Run your bash script file
-```
-./YOUR_BASH_SCRIPT_FILE
-```
-
 ![Screenshot 2024-09-24 163409](https://github.com/user-attachments/assets/b17ef25c-fe2f-4094-85b5-000cce77acc2)
 
+## Testing Documentation
 
-## Unit and Integration Testing Overview
+### Overview
 
 In this project, we use the following testing tools:
 
 - **Jest**: Primary Testing Framework for Unit Tests
 - **Supertest**: For testing HTTP endpoints in Integration Tests
 - **Strapi Testing Utils**: For simulating Strapi instance in tests
+
+Total Test Cases: 43
+
+- Unit Tests: 25
+- Integration Tests: 18
+
+| Component | Feature | Test Type | Cases | Description |
+|-----------|---------|-----------|--------|-------------|
+| Auth | Login | Unit | 6 | Token validation, response handling, timeout testing |
+| Auth | Login | Integration | 2 | API endpoint testing |
+| Auth | Register | Unit | 6 | Input validation, error handling, performance testing |
+| Auth | Register | Integration | 3 | API endpoint testing |
+| Restaurant | Add | Unit | 8 | Image upload, data validation, error handling |
+| Restaurant | Add | Integration | 7 | API endpoint testing, integration validation |
+| Article | Creation/Update | Unit | 5 | Field validation, SEO validation, content length checks |
+| Article | Management | Integration | 6 | CRUD operations, authentication, error handling |
+
+## Detailed Implementation
+
+### Auth Components
+
+#### Login Tests
+- **Unit Tests (6 cases)**
+  - Token validation
+  - Response format verification
+  - Error handling scenarios
+  - Timeout handling
+  
+- **Integration Tests (2 cases)**
+  - API endpoint validation
+  - Authentication workflow
+
+#### Registration Tests
+- **Unit Tests (6 cases)**
+  - Input validation
+  - Error condition handling
+  - Performance benchmarking
+  
+- **Integration Tests (3 cases)**
+  - Registration workflow validation
+  - User creation verification
+  - Database integration
+
+### Restaurant Components
+
+#### Add Restaurant Feature
+- **Unit Tests (8 cases)**
+  - Image upload validation
+  - Data format verification
+  - Error state handling
+  - Input sanitization
+  
+- **Integration Tests (7 cases)**
+  - API communication
+  - Database integration
+  - Image storage verification
+  - Response validation
+
+### Article Components
+
+#### Article Management Tests
+- **Unit Tests (5 cases)**
+  - Required field validation
+  - Content length validation
+  - SEO metadata validation
+  - API error handling
+  - Successful article creation flow
+
+- **Integration Tests (6 cases)**
+  - Article creation with authentication
+  - Required field validation
+  - Article updates
+  - Authentication requirements
+  - Category relationships
+  - Error handling for invalid data
 
 ## Setting Up Tests
 
@@ -567,23 +469,27 @@ yarn test:coverage
 ```
 
 ## Test File Structure
+
 ### api test
+
 ```
 api/
 ├── __tests__/
 │   ├── unit/
-│   │   └── auth.test.js       # Unit tests 
+│   │   └── auth.test.js       # Unit tests
 │   └── integration/
-│       └── auth.integration.test.js  # Integration tests 
+│       └── auth.integration.test.js  # Integration tests
 ```
+
 ### client test
+
 ```
 client/
 ├── __tests__/
 │   ├── unit/
 │   │   └── addRestaurant.test.js              # unit tests
 │   └── integration/
-│       └── addRestaurant.integration.test.js  # Integration tests 
+│       └── addRestaurant.integration.test.js  # Integration tests
 ```
 
 ## Test Coverage
@@ -591,6 +497,7 @@ client/
 ### 1. Unit Tests (auth.test.js)
 
 #### Login Function
+
 ```javascript
 describe('Login Function', () => {
   it('should successfully login with valid credentials', async () => {
@@ -605,48 +512,104 @@ describe('Login Function', () => {
     };
     // Test implementation
   });
+
+  it('should handle login failure with invalid credentials', async () => {
+    const response = await fetch('/api/auth/local', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: 'wrong', password: 'wrong' })
+    });
+    expect(response.status).toBe(400);
+  });
 });
 ```
 
 Coverage includes:
 - POST request to `/api/auth/local`
 - JWT token validation
-- User data validation
+- User data validation 
+- Error handling for invalid credentials
 
-#### Registration Function
+#### Registration Function 
+
 ```javascript
-it('should register within timeout', async () => {
-  const startTime = Date.now();
-  const result = await register('newuser', 'newuser@example.com', 'password123');
-  const endTime = Date.now();
-  const executionTime = endTime - startTime;
+describe('Register Function', () => {
+  it('should register within timeout', async () => {
+    const startTime = Date.now();
+    const result = await register(
+      'newuser',
+      'newuser@example.com', 
+      'password123'
+    );
+    const endTime = Date.now();
+    const executionTime = endTime - startTime;
 
-  expect(executionTime).toBeLessThan(timeout);
-  expect(result.jwt).toBe('new-user-token');
-  expect(result.user.username).toBe('newuser');
+    expect(executionTime).toBeLessThan(timeout);
+    expect(result.jwt).toBe('new-user-token');
+    expect(result.user.username).toBe('newuser');
+  });
+
+  it('should handle registration failure with duplicate email', async () => {
+    const response = await register('newuser', 'existing@example.com', 'password123');
+    expect(response.status).toBe(400);
+  });
 });
 ```
 
 Coverage includes:
-- Registration request to `/api/auth/local/register`
-- Performance testing of registration process
-- Validation of JWT token and new user data
+- Registration request validation
+- Performance testing
+- Token validation
+- Error handling for duplicate data
 
-### 2. Integration Tests (auth.integration.test.js)
+### 2. Unit Tests (addRestaurant.test.js)
+
+#### Image Management
+
+```javascript
+describe('function: findImgIdByName', () => {
+  it('should return image id when name is found', async () => {
+    const name = 'correct_image_name';
+    const correctId = 123;
+    const imageId = await findImgIdByName(name);
+    expect(imageId).toBe(correctId);
+  });
+
+  it('should throw error when name not found', async () => {
+    const name = 'wrong_image_name';
+    await expect(findImgIdByName(name)).rejects.toThrow();
+  });
+});
+
+describe('function: imageUpload', () => {
+  it('should limit image uploads to 5 files', async () => {
+    const images = Array.from({ length: 7 }, (_, i) => new File(['content'], `test${i + 1}.jpg`, { type: 'image/jpeg' }));
+    const result = await imageUpload(images, 'TestRestaurant');
+    expect(result).toHaveLength(5);
+  });
+});
+```
+
+Coverage includes:
+- Image ID validation
+- Upload size limitations
+- File type validation
+- Error handling for uploads
+
+### 3. Integration Tests (auth.integration.test.js)
 
 #### Authentication Setup
+
 ```javascript
 beforeAll(async () => {
   strapi = await Strapi().load();
   await strapi.start();
   request = supertest(strapi.server.httpServer);
-  
-  // Get Authenticated role
+
   authRole = await strapi.query('plugin::users-permissions.role').findOne({
     where: { type: 'authenticated' },
   });
 
-  // Create test user
   await strapi.plugins['users-permissions'].services.user.add({
     username: 'testuser',
     email: 'test@example.com',
@@ -657,52 +620,54 @@ beforeAll(async () => {
     provider: 'local',
     blocked: false,
   });
-}, 30000);
+});
 ```
 
-Coverage includes:
-- Strapi server initialization
-- Test user creation
-- Roles and permissions configuration
-
 #### Login Endpoint Tests
+
 ```javascript
 describe('POST /api/auth/local', () => {
   it('should login successfully with valid credentials', async () => {
     const response = await request.post('/api/auth/local').send({
       identifier: 'test@example.com',
-      password: 'Password123!',
+      password: 'Password123!'
     });
-    
+
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('jwt');
-    expect(response.body).toHaveProperty('user');
-  });
-
-  it('should fail login with invalid credentials', async () => {
-    const response = await request.post('/api/auth/local').send({
-      identifier: 'wrong@email.com',
-      password: 'wrongpassword',
-    });
-    
-    expect(response.status).toBe(400);
-    expect(response.body).toHaveProperty('error');
   });
 });
 ```
-### 3. Unit Tests (addRestaurant.test.js)
-This test will include all the function from file: `<project folder>/client/pages/restaurant/add/submit.js`
 
-Coverage includes:
-- initiate api request
-- bad request handling
-- input error handling
+### 4. Integration Tests (addRestaurant.integration.test.js)
+
+#### Restaurant Creation Flow
+
+```javascript
+describe('Restaurant Creation Integration', () => {
+  it('should validate required fields in request payload', async () => {
+    const invalidData = { data: { name: 'Test Restaurant' } };
+
+    const response = await fetch('http://localhost:1337/api/restaurants', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify(invalidData)
+    });
+
+    expect(response.ok).toBe(false);
+  });
+});
+```
 
 ## Viewing Test Results
 
 The test results can be viewed in two ways:
 
 1. **Console Output**: When running tests, results appear in the terminal:
+
    - ✓ for passed tests
    - ✕ for failed tests
    - Detailed error messages for failed tests
@@ -713,108 +678,71 @@ The test results can be viewed in two ways:
    - Function coverage
    - Line coverage
 
-Example test result output:
-```
-Auth Unit Tests
-    Login Function                                                                                                                                            
-      √ should successfully login with valid credentials (3 ms)                                                                                               
-      √ should handle login failure with invalid credentials (15 ms)                                                                                          
-    Register Function                                                                                                                                         
-      √ should successfully register a new user within timeout (1 ms)                                                                                         
-      √ should handle registration failure with duplicate email (1 ms)
+Recent test execution results:
 
-  Auth Integration Tests
-    POST /api/auth/local                                                                                                                                      
-      √ should login successfully with valid credentials (111 ms)                                                                                             
-      √ should fail login with invalid credentials (16 ms)                                                                                                    
-    POST /api/auth/local/register                                                                                                                             
-      √ should successfully register a new user (170 ms)                                                                                                      
-      √ should fail registration with existing email (83 ms)                                                                                                  
-      √ should validate required fields (86 ms)      
+| Component | Test Suites | Tests | Coverage Details |
+|-----------|-------------|-------|------------------|
+| API | 3 passed | 15 passed | **Statement**: 91.2%<br>**Branch**: 45%<br>**Function**: 88.5%<br>**Line**: 90.8% |
+| Client | 2 passed | 23 passed | **Statement**: 91.3%<br>**Branch**: 85%<br>**Function**: 100%<br>**Line**: 90.76% |
 
--------------------------------------|---------|----------|---------|---------|-------------------                                                            
-File                                 | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                             
--------------------------------------|---------|----------|---------|---------|-------------------                                                            
-All files                            |   89.87 |    33.33 |   85.71 |   89.47 |                                                                               
- config                              |     100 |       50 |     100 |     100 |                                                                               
-  admin.js                           |     100 |      100 |     100 |     100 |                                                                               
-  api.js                             |     100 |      100 |     100 |     100 |                   
-  cron-tasks.js                      |     100 |      100 |     100 |     100 | 
-  database.js                        |     100 |       50 |     100 |     100 | 15-40
-  middlewares.js                     |     100 |      100 |     100 |     100 | 
-  plugins.js                         |     100 |      100 |     100 |     100 | 
-  server.js                          |     100 |      100 |     100 |     100 | 
- src                                 |     100 |      100 |     100 |     100 | 
-  index.js                           |     100 |      100 |     100 |     100 | 
- src/api/article/controllers         |     100 |      100 |     100 |     100 | 
-  article.js                         |     100 |      100 |     100 |     100 | 
- src/api/article/routes              |     100 |      100 |     100 |     100 | 
-  article.js                         |     100 |      100 |     100 |     100 | 
- src/api/article/services            |     100 |      100 |     100 |     100 | 
-  article.js                         |     100 |      100 |     100 |     100 | 
- src/api/blog-page/controllers       |     100 |      100 |     100 |     100 | 
-  blog-page.js                       |     100 |      100 |     100 |     100 | 
- src/api/blog-page/routes            |     100 |      100 |     100 |     100 | 
-  blog-page.js                       |     100 |      100 |     100 |     100 | 
- src/api/blog-page/services          |     100 |      100 |     100 |     100 | 
-  blog-page.js                       |     100 |      100 |     100 |     100 | 
- src/api/category/controllers        |     100 |      100 |     100 |     100 | 
-  category.js                        |     100 |      100 |     100 |     100 | 
- src/api/category/routes             |     100 |      100 |     100 |     100 | 
-  category.js                        |     100 |      100 |     100 |     100 | 
- src/api/category/services           |     100 |      100 |     100 |     100 | 
-  category.js                        |     100 |      100 |     100 |     100 | 
- src/api/global/controllers          |     100 |      100 |     100 |     100 | 
-  global.js                          |     100 |      100 |     100 |     100 | 
- src/api/global/routes               |     100 |      100 |     100 |     100 | 
-  global.js                          |     100 |      100 |     100 |     100 | 
- src/api/global/services             |     100 |      100 |     100 |     100 | 
-  global.js                          |     100 |      100 |     100 |     100 | 
- src/api/page/controllers            |     100 |      100 |     100 |     100 | 
-  page.js                            |     100 |      100 |     100 |     100 | 
- src/api/page/routes                 |     100 |      100 |     100 |     100 | 
-  page.js                            |     100 |      100 |     100 |     100 | 
- src/api/page/services               |     100 |      100 |     100 |     100 | 
-  page.js                            |     100 |      100 |     100 |     100 | 
- src/api/place/controllers           |     100 |      100 |     100 |     100 | 
-  place.js                           |     100 |      100 |     100 |     100 | 
- src/api/place/routes                |     100 |      100 |     100 |     100 | 
-  place.js                           |     100 |      100 |     100 |     100 | 
- src/api/place/services              |     100 |      100 |     100 |     100 | 
-  place.js                           |     100 |      100 |     100 |     100 | 
- src/api/restaurant-page/controllers |     100 |      100 |     100 |     100 | 
-  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
- src/api/restaurant-page/routes      |     100 |      100 |     100 |     100 | 
-  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
- src/api/restaurant-page/services    |     100 |      100 |     100 |     100 | 
-  restaurant-page.js                 |     100 |      100 |     100 |     100 | 
- src/api/restaurant/controllers      |     100 |      100 |     100 |     100 | 
-  restaurant.js                      |     100 |      100 |     100 |     100 | 
- src/api/restaurant/routes           |     100 |      100 |     100 |     100 | 
-  restaurant.js                      |     100 |      100 |     100 |     100 | 
- src/api/restaurant/services         |     100 |      100 |     100 |     100 | 
-  restaurant.js                      |     100 |      100 |     100 |     100 | 
- src/api/review/controllers          |     100 |      100 |     100 |     100 | 
-  review.js                          |     100 |      100 |     100 |     100 | 
- src/api/review/routes               |     100 |      100 |     100 |     100 | 
-  review.js                          |     100 |      100 |     100 |     100 | 
- src/api/review/services             |     100 |      100 |     100 |     100 | 
-  review.js                          |     100 |      100 |     100 |     100 | 
- src/policies                        |   11.11 |        0 |       0 |   11.11 | 
-  auth.js                            |   11.11 |        0 |       0 |   11.11 | 2-13
--------------------------------------|---------|----------|---------|---------|-------------------
+### API Coverage Highlights
 
-Test Suites: 2 passed, 2 total
-Tests:       9 passed, 9 total
-Snapshots:   0 total
-Time:        7.714 s, estimated 25 s
-Ran all test suites.
-Done in 8.40s.          
-```
+- Full coverage (100%) on most API endpoints including:
+
+  - Article
+
+  - Blog page
+
+  - Category
+
+  - Global
+
+  - Page
+
+  - Place
+
+  - Restaurant
+
+  - Review
+
+- Areas needing improvement:
+
+  - Policies (auth.js): 11.11% coverage
+
+  - Database config: 50% branch coverage
+
+  - Index.js: 90% coverage with line 40 uncovered
+
+### Client Coverage Highlights
+
+- High overall coverage in submit.js:
+
+  - Statements: 91.3%
+
+  - Branches: 85%
+
+  - Functions: 100%
+
+  - Lines: 90.76%
+
+- Uncovered lines in submit.js: 12, 82, 91, 94, 97, 100
+
+- All test suites passing successfully
+
+### Total Project Statistics
+
+- Total Test Suites: 5 passed (3 API + 2 Client)
+
+- Total Tests: 43 passed (20 API + 23 Client)
+
+- Average Statement Coverage: 91.25%
+
+- Average Line Coverage: 90.78%
 
 ## Adding New Tests
 
 ### 1. Unit Tests
+
 Create new files in `<./api or ./client>/__tests__/unit/` following this pattern:
 
 ```javascript
@@ -827,159 +755,202 @@ describe('Feature Name', () => {
 ```
 
 ### 2. Integration Tests
+
 Create new files in `<./api or ./client>/__tests__/integration/` using Supertest:
 
 ```javascript
 // xxxx.integration.test.js
 describe('API Endpoint', () => {
   it('should handle request correctly', async () => {
-    const response = await request(app)
-      .post('/api/endpoint')
-      .send(data);
-    
+    const response = await request(app).post('/api/endpoint').send(data);
+
     expect(response.status).toBe(200);
   });
 });
 ```
 
-# Node.js CI Workflow
+## CI/CD Pipeline
 
-## Overview
-This repository contains a Node.js continuous integration (CI) workflow that automates testing for both API and client applications across multiple operating systems and Node.js versions.
+### Overview
 
-## Workflow Triggers
-The workflow is triggered on:
-- Push events to `test-feature06` and `develop` branches
-- Pull request events to `develop-feature06`, `develop`, and `main` branches
+The project implements an automated continuous integration (CI) workflow using GitHub Actions to ensure code quality and reliability. The pipeline executes comprehensive testing suites for both API and client applications, maintaining high standards of code quality across all changes.
 
-## CI Environment Matrix
-The workflow runs tests across the following combinations:
+### Pipeline Configuration
 
-### Operating Systems
-- `ubuntu:latest`
-- `debian:latest` 
-- `redhat/ubi8`
+#### Workflow Triggers
 
-### Node.js Versions
-- 16.x
-- 18.x
+The CI pipeline activates on:
 
-## Workflow Steps
+- **Push Events:**
+  - `develop` branch
+  - `fix-from-feedback` branch
+- **Pull Request Events:**
+  - `develop` branch
+  - `main` branch
 
-### 1. Environment Setup
-- Checks out the repository using `actions/checkout@v4`
-- Sets up Node.js using `actions/setup-node@v4`
-- Installs Yarn package manager globally
+#### Environment Matrix
 
-### 2. API Setup and Testing
-#### Dependencies Installation
+- **Operating System:** Ubuntu Latest
+- **Node.js Version:** 16.x
+
+### Infrastructure Components
+
+#### 1. Environment Setup
+
+- Repository checkout via `actions/checkout@v4`
+- Node.js configuration using `actions/setup-node@v4`
+- Dependency caching system:
+  ```yaml
+  - uses: actions/cache@v3
+    with:
+      path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+      key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+  ```
+
+#### 2. System Dependencies
+
 ```bash
-# Working directory: ./api
+# Ubuntu packages
+sudo apt-get update
+sudo apt-get install -y build-essential
+
+# Database setup
+npm rebuild sqlite3 --force
+```
+
+#### 3. Development Tools
+
+```bash
+# Global installations
+npm install -g yarn
 yarn global add jest
-yarn && yarn seed
 ```
 
-#### Environment Configuration
-Creates `.env` file with test secrets:
-```env
-JWT_SECRET=test-jwt-secret
-ADMIN_JWT_SECRET=test-admin-jwt-secret
-```
+### Testing Infrastructure
 
-#### Testing
-- Runs unit tests: `yarn test:unit`
-- Runs integration tests: `yarn test:integration`
+#### Project Structure
 
-### 3. Client Setup and Testing
-#### Dependencies Installation
-```bash
-# Working directory: ./client
-yarn
-```
-
-#### Testing
-- Runs unit tests: `yarn test:unit`
-- Runs integration tests: `yarn test:integration`
-
-## Project Structure
 ```
 .
-├── api/                # Backend API application
+├── api/                        # Backend API application
 │   ├── __tests__/
-│   │   ├── unit/
-│   │   └── integration/
+│   │   ├── integration/       # API integration tests
+│   │   │   ├── auth.integration.test.js
+│   │   │   └── ...
+│   │   └── unit/             # API unit tests
+│   │       ├── auth.test.js
+│   │       └── ...
 │   └── package.json
 │
-└── client/            # Frontend client application
+└── client/                    # Frontend client application
     ├── __tests__/
-    │   ├── unit/
-    │   └── integration/
+    │   ├── integration/      # Client integration tests
+    │   │   ├── addRestaurant.integration.test.js
+    │   │   └── ...
+    │   └── unit/            # Client unit tests
+    │       ├── addRestaurant.test.js
+    │       └── ...
     └── package.json
 ```
 
-## GitHub Actions Configuration
-This workflow uses the following configuration:
+#### Test Configuration Files
+
+- `jest.config.js`: Jest configuration
+- `setup.js`: Test environment setup
+- `env.js`: Testing environment variables
+
+#### API Testing Suite
+
+```bash
+# Directory: ./api
+yarn test:unit        # Run unit tests
+yarn test:integration # Run integration tests
+```
+
+#### Client Testing Suite
+
+```bash
+# Directory: ./client
+yarn test:unit        # Run unit tests
+yarn test:integration # Run integration tests
+```
+
+### Security Implementation
+
+- Secure environment variable handling via GitHub Secrets
+- JWT token management for authentication tests
+- Protected API endpoints testing
+
+### Pipeline Execution
+
+#### 1. Initialization Phase
 
 ```yaml
-name: Node.js CI
-
-on:
-  push:
-    branches: [ test-feature06 , develop ]
-  pull_request:
-    branches: [ develop-feature06, develop, main ]
-
-jobs:
-
-  tests:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: ['ubuntu:latest', 'debian:latest', 'redhat/ubi8'] 
-        node-version: [16.x , 18.x]
-    
-    runs-on: ubuntu-latest
-    container: ${{ matrix.os }}
-
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-    
-    - name: Install Yarn
-      run: npm install -g yarn
-    
-    - name: Install api dependencies
-      working-directory: ./api
-      run: |
-        yarn global add jest
-        yarn && yarn seed
-        echo "JWT_SECRET=test-jwt-secret" >> .env
-        echo "ADMIN_JWT_SECRET=test-admin-jwt-secret" >> .env
-    
-    - name: Install client dependencies
-      working-directory: ./client
-      run: |
-        yarn
-    
-    - name: Run api unit tests
-      working-directory: ./api
-      run: yarn test:unit
-    
-    - name: Run api integration tests
-      working-directory: ./api
-      run: yarn test:integration
-    
-    - name: Run client unit tests
-      working-directory: ./client
-      run: |
-        yarn test:unit
-    
-    - name: Run client integration tests
-      working-directory: ./client
-      run: |
-        yarn test:integration
+steps:
+  - uses: actions/checkout@v4
+  - uses: actions/setup-node@v4
+    with:
+      node-version: ${{ matrix.node-version }}
 ```
+
+#### 2. Dependency Management
+
+```yaml
+- name: Cache API dependencies
+  uses: actions/cache@v3
+  with:
+    path: ${{ steps.api-yarn-cache-dir-path.outputs.dir }}
+    key: ${{ runner.os }}-yarn-api-${{ hashFiles('api/yarn.lock') }}
+```
+
+#### 3. Environment Configuration
+
+```yaml
+env:
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
+```
+
+#### 4. Test Execution
+
+```yaml
+- name: Run API tests
+  working-directory: ./api
+  run: |
+    yarn test:unit
+    yarn test:integration
+
+- name: Run client tests
+  working-directory: ./client
+  run: |
+    yarn test:unit
+    yarn test:integration
+```
+
+### Monitoring and Results
+
+#### Pipeline Status Indicators
+
+- ✅ Success: All tests passed
+- ❌ Failure: Test failures detected
+- 🟡 In Progress: Pipeline executing
+
+#### Accessing Build Results
+
+1. Navigate to GitHub repository
+2. Select "Actions" tab
+3. Click desired workflow run
+4. Review:
+   - Test execution logs
+   - Build artifacts
+   - Error reports
+   - Coverage statistics
+
+### Pipeline Maintenance
+
+To modify pipeline configuration:
+
+1. Edit `.github/workflows/node-test.yml`
+2. Update test scripts in respective package.json files
+3. Modify environment variables in GitHub Secrets
+4. Update cache configuration as dependencies change

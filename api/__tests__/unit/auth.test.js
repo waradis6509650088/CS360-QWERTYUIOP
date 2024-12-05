@@ -1,4 +1,3 @@
-const { AuthContext } = require('../../../client/context/AuthContext');
 const jwt = require('jsonwebtoken');
 
 describe('Auth Unit Tests', () => {
