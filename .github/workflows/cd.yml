@@ -110,8 +110,11 @@ jobs:
             -p 1337:1337 \
             -e HOST=0.0.0.0 \
             -e PORT=1337 \
+            -e DATABASE_CLIENT=sqlite \
+            -e DATABASE_FILENAME=.tmp/data.db \
             -e STRAPI_ADMIN_CLIENT_URL=http://${INSTANCE_PUBLIC_IPV4}:3000 \
-            -e STRAPI_ADMIN_CLIENT_PREVIEW_SECRET=${{ secrets.JWT_SECRET }} \
+            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+            -e ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} \
             $REPOSITORYAPI:latest
 
           echo "Deploying Client"
