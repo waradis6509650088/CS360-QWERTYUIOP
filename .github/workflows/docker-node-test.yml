@@ -5,7 +5,7 @@ on:
     branches:
       - main 
       - develop
-      - fix-from-feedback
+      - improvement-coding-and-documentation
     paths-ignore:
       - 'README.md'
       - 'docs/**'
@@ -121,6 +121,17 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create API env file
+        run: |
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" > api/.env
+          echo "ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}" >> api/.env
+          echo "NODE_ENV=test" >> api/.env
+
+      - name: Create Client env file  
+        run: |
+          echo "NEXT_PUBLIC_API_URL=http://test-api:1337" > client/.env
+          echo "NODE_ENV=test" >> client/.env
           
       - name: Build and Push API Image
         uses: docker/build-push-action@v4
@@ -133,6 +144,9 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:${{ github.sha }}
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:buildcache,mode=max
+          build-args: |
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
   
       - name: Build and Push Client Image
         uses: docker/build-push-action@v4
@@ -145,6 +159,8 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:${{ github.sha }}
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:buildcache,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://test-api:1337
 
   test-docker-images:
     needs: build-and-push-images
@@ -164,9 +180,6 @@ jobs:
           docker run -d \
             --name test-api \
             --network foodadvisor-network \
-            -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
-            -e ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }} \
-            -e NODE_ENV=test \
             ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest \
             tail -f /dev/null
 
@@ -175,21 +188,8 @@ jobs:
           docker run -d \
             --name test-client \
             --network foodadvisor-network \
-            -e NEXT_PUBLIC_API_URL=http://test-api:1337 \
-            -e NODE_ENV=test \
             ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest \
             tail -f /dev/null
-
-      - name: Install and configure API
-        run: |
-          docker exec test-api yarn install
-          docker exec test-api yarn seed
-          docker exec test-api sh -c "echo JWT_SECRET=${JWT_SECRET} > .env"
-          docker exec test-api sh -c "echo ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET} >> .env"
-
-      - name: Install client dependencies
-        run: |
-          docker exec test-client yarn install
 
       - name: Run API unit tests
         run: docker exec test-api yarn test:unit
