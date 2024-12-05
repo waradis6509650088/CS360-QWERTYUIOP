@@ -1,0 +1,218 @@
+name: CI - Test and Deploy Docker Images
+
+on:
+  push:
+    branches:
+      - main 
+      - develop
+      - improvement-coding-and-documentation
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+
+jobs:
+  test-source-code:
+    name: Run Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [16.x]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Get API yarn cache directory path
+      id: api-yarn-cache-dir-path
+      run: echo "dir=$(cd api && yarn cache dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache API dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.api-yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-api-${{ hashFiles('api/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-api-
+
+    - name: Get client yarn cache directory path
+      id: client-yarn-cache-dir-path
+      run: echo "dir=$(cd client && yarn cache dir)" >> $GITHUB_OUTPUT
+
+    - name: Cache client dependencies
+      uses: actions/cache@v3
+      with:
+        path: ${{ steps.client-yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-client-${{ hashFiles('client/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-client-
+
+    - name: Install system dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+        
+    - name: Rebuild sqlite3
+      run: npm rebuild sqlite3 --force
+
+    - name: Install global dependencies
+      run: |
+        npm install -g yarn
+        yarn global add jest
+
+    - name: Install and configure API
+      working-directory: ./api
+      env:
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
+      run: |
+        yarn install
+        yarn seed
+        echo "JWT_SECRET=${JWT_SECRET}" >> .env
+        echo "ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}" >> .env
+
+    - name: Install client dependencies  
+      working-directory: ./client
+      run: yarn install
+
+    - name: Run API unit tests
+      working-directory: ./api
+      run: yarn test:unit
+      
+    - name: Run API integration tests
+      working-directory: ./api
+      run: yarn test:integration
+
+    - name: Run client unit tests
+      working-directory: ./client
+      run: yarn test:unit
+
+    - name: Run client integration tests
+      working-directory: ./client
+      run: yarn test:integration
+
+  build-and-push-images:
+    needs: test-source-code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create API env file
+        run: |
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" > api/.env
+          echo "ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}" >> api/.env
+          echo "NODE_ENV=test" >> api/.env
+
+      - name: Create Client env file  
+        run: |
+          echo "NEXT_PUBLIC_API_URL=http://test-api:1337" > client/.env
+          echo "NODE_ENV=test" >> client/.env
+          
+      - name: Build and Push API Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./api/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:buildcache,mode=max
+          build-args: |
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
+  
+      - name: Build and Push Client Image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./client/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:buildcache,mode=max
+          build-args: |
+            NEXT_PUBLIC_API_URL=http://test-api:1337
+
+  test-docker-images:
+    needs: build-and-push-images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create Docker network
+        run: docker network create foodadvisor-network
+
+      - name: Start API container for tests
+        run: |
+          docker run -d \
+            --name test-api \
+            --network foodadvisor-network \
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest \
+            tail -f /dev/null
+
+      - name: Start Client container for tests
+        run: |
+          docker run -d \
+            --name test-client \
+            --network foodadvisor-network \
+            ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest \
+            tail -f /dev/null
+
+      - name: Run API unit tests
+        run: docker exec test-api yarn test:unit
+
+      - name: Run API integration tests
+        run: docker exec test-api yarn test:integration
+
+      - name: Run client unit tests
+        run: docker exec test-client yarn test:unit
+
+      - name: Run client integration tests
+        run: docker exec test-client yarn test:integration
+
+      - name: Display test logs on failure
+        if: failure()
+        run: |
+          echo "API Container Logs:"
+          docker logs test-api
+          echo "Client Container Logs:"
+          docker logs test-client
+
+      - name: Clean Up
+        if: always()
+        run: |
+          docker rm -f test-api test-client || true
+          docker network rm foodadvisor-network || true
