@@ -6,7 +6,6 @@ on:
       - main 
       - develop
       - improvement-coding-and-documentation
-  workflow_dispatch:
 
 jobs:
   deploy:
@@ -24,22 +23,6 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Validate AWS Resources
-        run: |
-          # Validate key pair
-          KP_NAME="${{ secrets.AWS_KP_NAME }}"
-          aws ec2 describe-key-pairs --key-names $KP_NAME --query 'KeyPairs[0].KeyName' --output text || {
-            echo "Key pair not found"
-            exit 1
-          }
-          
-          # Validate security group
-          SG_ID="${{ secrets.AWS_SG_ID }}"
-          aws ec2 describe-security-groups --group-ids $SG_ID --query 'SecurityGroups[0].IpPermissions[?FromPort==`22`]' --output text || {
-            echo "Security group missing SSH access rule"
-            exit 1
-          }
-
       - name: Create EC2 instance
         id: create-ec2
         run: |
@@ -55,10 +38,8 @@ jobs:
           
           echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
           
-          # Wait for instance to be running
           aws ec2 wait instance-running --instance-ids ${INSTANCE_ID}
           
-          # Get public IP
           PUBLIC_IP=$(aws ec2 describe-instances \
             --instance-ids $INSTANCE_ID \
             --query 'Reservations[0].Instances[0].PublicIpAddress' \
@@ -66,29 +47,16 @@ jobs:
             
           echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
-      - name: Setup SSH and deployment files
+      - name: Copy Docker Compose files
         env:
           INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
-          PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
         run: |
-          # Create SSH directory
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          
-          # Save and secure private key
-          echo "$PRIVATE_KEY" | sed 's/\\n/\n/g' > private_key.pem
-          chmod 600 private_key.pem
-          
-          # Add host key scanning
-          ssh-keyscan -H ${INSTANCE_IP} >> ~/.ssh/known_hosts
-          
-          # Create deployment directory
+          echo "Creating deployment directory..."
           mkdir -p deployment
           
-          # Copy necessary files
           cp docker-compose.yml deployment/
           
-          # Create environment file
+          # Create .env file for Docker Compose
           cat << EOF > deployment/.env
           DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
@@ -97,99 +65,57 @@ jobs:
           PUBLIC_IP=${INSTANCE_IP}
           EOF
 
-      - name: Wait for SSH availability
+      - name: Install netcat
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y netcat-openbsd
+  
+      - name: Wait for SSH
         env:
           INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
         run: |
           echo "Waiting for SSH to become available..."
-          timeout 300s bash -c '
-            until ssh -i private_key.pem \
-                    -o StrictHostKeyChecking=no \
-                    -o UserKnownHostsFile=/dev/null \
-                    ec2-user@${INSTANCE_IP} echo "SSH connection successful"
-            do
-              echo "Retrying SSH connection..."
-              sleep 10
-            done
-          '
+          # Try until port 22 is open
+          while ! nc -z $INSTANCE_IP 22; do
+            echo "SSH not ready yet..."
+            sleep 10
+          done
+          # Additional wait for user-data script to complete
+          sleep 60
+          echo "SSH is ready!"
 
       - name: Deploy using Docker Compose
         env:
           INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
+          PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
         run: |
-          # Copy deployment files
-          scp -i private_key.pem \
-              -o StrictHostKeyChecking=no \
-              -o UserKnownHostsFile=/dev/null \
-              -r deployment/* ec2-user@${INSTANCE_IP}:~/
+          # Save private key
+          echo "$PRIVATE_KEY" > private_key.pem
+          chmod 600 private_key.pem
           
-          # Deploy application
-          ssh -i private_key.pem \
-              -o StrictHostKeyChecking=no \
-              -o UserKnownHostsFile=/dev/null \
-              ec2-user@${INSTANCE_IP} '
-            # Start deployment
-            echo "Starting deployment process..."
-            
-            # Pull latest images
-            if ! docker-compose pull; then
-              echo "Failed to pull Docker images"
-              exit 1
-            fi
-            
-            # Start containers
-            if ! docker-compose up -d; then
-              echo "Failed to start containers"
-              exit 1
-            fi
-            
-            # Verify containers are running
-            if ! docker-compose ps | grep "Up"; then
-              echo "Containers failed to start properly"
-              exit 1
-            fi
-            
-            echo "Deployment successful"
+          # Copy files to EC2
+          scp -i private_key.pem -o StrictHostKeyChecking=no -r deployment/* ec2-user@${INSTANCE_IP}:~/
+          
+          # Deploy using Docker Compose
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${INSTANCE_IP} '
+            docker-compose pull
+            docker-compose up -d
           '
 
-      - name: Monitor Deployment Health
+      - name: Verify deployment
         env:
           INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
         run: |
-          # Function to check endpoint health
-          check_health() {
-            local url=$1
-            local max_attempts=30
-            local attempt=1
-            
-            while [ $attempt -le $max_attempts ]; do
-              if curl -s -f "$url" > /dev/null; then
-                echo "Service at $url is healthy"
-                return 0
-              fi
-              echo "Attempt $attempt: Service at $url not ready..."
-              sleep 10
-              attempt=$((attempt + 1))
-            done
-            echo "Service at $url failed health check"
-            return 1
-          }
+          echo "Waiting for services to initialize..."
+          sleep 30
           
-          echo "Starting health checks..."
+          echo "Checking API health..."
+          curl -f http://${INSTANCE_IP}:1337/admin
           
-          # Check API health
-          if ! check_health "http://${INSTANCE_IP}:1337/admin"; then
-            echo "API failed to start"
-            exit 1
-          fi
+          echo "Checking Client health..."
+          curl -f http://${INSTANCE_IP}:3000
           
-          # Check Client health
-          if ! check_health "http://${INSTANCE_IP}:3000"; then
-            echo "Client failed to start"
-            exit 1
-          fi
-          
-          echo "Deployment successful and healthy"
+          echo "Deployment Summary:"
           echo "API URL: http://${INSTANCE_IP}:1337"
           echo "Client URL: http://${INSTANCE_IP}:3000"
 
@@ -197,21 +123,5 @@ jobs:
         if: failure()
         env:
           INSTANCE_ID: ${{ steps.create-ec2.outputs.instance_id }}
-          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
         run: |
-          echo "Deployment failed, starting cleanup..."
-          
-          # Try to stop containers if SSH is available
-          ssh -i private_key.pem \
-              -o StrictHostKeyChecking=no \
-              -o UserKnownHostsFile=/dev/null \
-              -o ConnectTimeout=10 \
-              ec2-user@${INSTANCE_IP} '
-            docker-compose down || true
-          ' || true
-          
-          # Terminate the EC2 instance
           aws ec2 terminate-instances --instance-ids $INSTANCE_ID
-          aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
-          
-          echo "Cleanup completed"
