@@ -18,8 +18,6 @@ COPY . .
 # Create uploads directory
 RUN mkdir -p public/uploads
 
-RUN node ./script/seed.js 
-
 # Set environment for testing
 ENV NODE_ENV=test
 
