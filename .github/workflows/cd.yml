@@ -34,6 +34,7 @@ jobs:
             --security-group-ids ${{ secrets.AWS_SG_ID }} \
             --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":30,"VolumeType":"gp3"}}]' \
             --user-data file://user-data.sh \
+            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=FoodAdvisor-Production}]' \
             --query 'Instances[0].InstanceId' \
             --output text)
           
@@ -55,64 +56,69 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
+          PREVIEW_SECRET: ${{ secrets.PREVIEW_SECRET }}
         run: |
           # Save private key
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-            
-          # Create API env file
+    
+          # Create API environment file
           cat << EOF > api.env
           HOST=0.0.0.0
           PORT=1337
+          NODE_ENV=production
           JWT_SECRET=${JWT_SECRET}
           ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
           STRAPI_ADMIN_CLIENT_URL=http://${INSTANCE_IP}:3000
-          STRAPI_ADMIN_CLIENT_PREVIEW_SECRET=$(openssl rand -hex 32)
+          STRAPI_ADMIN_CLIENT_PREVIEW_SECRET=${PREVIEW_SECRET}
           EOF
-  
-          # Create Client env file
+
+          # Create Client environment file
           cat << EOF > client.env
+          NODE_ENV=production
           NEXT_PUBLIC_API_URL=http://${INSTANCE_IP}:1337
-          PREVIEW_SECRET=$(openssl rand -hex 32)
+          PREVIEW_SECRET=${PREVIEW_SECRET}
           EOF
-  
-          # Create docker-compose env file
+
+          # Create docker environment file
           cat << EOF > .env
           DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
-          PUBLIC_IP=${INSTANCE_IP}
           EOF
-            
+    
           # Wait for user-data script to complete
           echo "Waiting for instance setup to complete..."
           sleep 90
-            
+    
           # Copy files to EC2
-          scp -i private_key.pem -o StrictHostKeyChecking=no .env api.env client.env docker-compose.yml ec2-user@${INSTANCE_IP}:~/
-            
+          scp -i private_key.pem -o StrictHostKeyChecking=no \
+            .env api.env client.env docker-compose.yml \
+            ec2-user@${INSTANCE_IP}:~/
+    
           # Deploy using Docker Compose
           ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${INSTANCE_IP} << 'EOF'
-            # Ensure environment files are in place
-            sudo mkdir -p /app/api /app/client
-            sudo mv api.env /app/api/.env
-            sudo mv client.env /app/client/.env
-              
-            # Source environment variables
+            # Create required directories
+            sudo mkdir -p /app/public/uploads
+            sudo chown -R ec2-user:docker /app/public/uploads
+      
+            # Load environment variables
             set -a
             source .env
             set +a
-              
-            # Pull and start containers with updated environment config
-            echo "Starting containers with configured environments..."
+      
+            # Pull images and start containers
+            sudo docker-compose pull
             sudo docker-compose up -d
-              
-            # Verify environment files were mounted correctly
-            echo "Verifying API environment..."
-            sudo docker exec foodadvisor-api cat .env
-            echo "Verifying Client environment..."
-            sudo docker exec foodadvisor-client cat .env
-              
-            # Show container status
+      
+            # Verify containers are running
             sudo docker-compose ps
+      
+            # Check API environment
+            echo "Verifying API environment variables..."
+            sudo docker exec foodadvisor-api printenv | grep -E "JWT_SECRET|ADMIN_JWT_SECRET|PREVIEW_SECRET"
+      
+            # Check Client environment
+            echo "Verifying Client environment variables..."
+            sudo docker exec foodadvisor-client printenv | grep -E "PREVIEW_SECRET|NEXT_PUBLIC_API_URL"
           EOF
 
       - name: Verify deployment with enhanced checks

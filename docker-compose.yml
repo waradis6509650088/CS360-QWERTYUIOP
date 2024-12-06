@@ -1,18 +1,10 @@
-version: '3.8'
-
+# docker-compose.yml
 services:
   api:
     image: ${DOCKERHUB_USERNAME}/foodadvisor-api:latest
     container_name: foodadvisor-api
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - JWT_SECRET=${JWT_SECRET}
-      - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
-      - STRAPI_ADMIN_CLIENT_URL=http://${PUBLIC_IP}:3000
-      - STRAPI_ADMIN_CLIENT_PREVIEW_SECRET=${PREVIEW_SECRET}
-      - HOST=0.0.0.0
-      - PORT=1337
+    env_file: api.env
     volumes:
       - ./uploads:/app/public/uploads
     ports:
@@ -24,9 +16,7 @@ services:
     image: ${DOCKERHUB_USERNAME}/foodadvisor-client:latest
     container_name: foodadvisor-client
     restart: unless-stopped
-    environment:
-      - NEXT_PUBLIC_API_URL=http://${PUBLIC_IP}:1337
-      - PREVIEW_SECRET=${PREVIEW_SECRET}
+    env_file: client.env
     ports:
       - "3000:3000"
     depends_on:
