@@ -4,7 +4,7 @@ FROM node:16-alpine
 WORKDIR /app/client
 
 # Copy package files  
-COPY package.json .
+COPY ./package.json .
 
 # Install dependencies
 RUN yarn install
