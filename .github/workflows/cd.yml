@@ -157,14 +157,3 @@ jobs:
           fi
           
           echo "Deployment verified successfully!"
-
-      - name: Cleanup on failure
-        if: failure()
-        env:
-          INSTANCE_ID: ${{ steps.create-ec2.outputs.instance_id }}
-        run: |
-          # Get instance logs before termination
-          aws ec2 get-console-output --instance-id $INSTANCE_ID
-          
-          # Terminate the instance
-          aws ec2 terminate-instances --instance-ids $INSTANCE_ID
