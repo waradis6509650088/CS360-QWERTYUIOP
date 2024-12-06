@@ -1,19 +1,19 @@
 # Use Node.js as the base image
 FROM node:16-alpine
 
-WORKDIR /app
+WORKDIR /app/api
 
 # Install build dependencies
 RUN apk add --no-cache python3 make g++ git
 
 # Copy package files
-COPY package*.json ./
+COPY api/package*.json api/yarn.lock ./
 
 # Install dependencies
-RUN yarn
+RUN yarn install
 
 # Copy API source code
-COPY . .
+COPY api/ .
 
 # Create uploads directory
 RUN mkdir -p public/uploads
