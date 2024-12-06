@@ -5,6 +5,7 @@ on:
     branches:
       - main 
       - develop
+      - improvement-coding-and-documentation
 
 jobs:
   deploy:
