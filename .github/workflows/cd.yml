@@ -110,7 +110,7 @@ jobs:
               -p 3000:3000 \
               ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-client:latest  
             sudo docker cp .env $(docker ps -q):/app/.env
-            sudo docker -p 3000:3000 -itd $(docker ps -q) yarn dev
+            sudo docker -itd -p 3000:3000 $(docker ps -q) yarn dev
 
             echo "Deploying API"
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest
