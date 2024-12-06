@@ -1,7 +1,7 @@
 # Use Node.js as the base image
 FROM node:16-alpine
 
-WORKDIR /app/api
+WORKDIR /app
 
 # Install build dependencies
 RUN apk add --no-cache python3 make g++ git
