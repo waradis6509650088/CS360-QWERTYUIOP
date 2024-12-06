@@ -32,7 +32,6 @@ jobs:
             --key-name ${{ secrets.AWS_KP_NAME }} \
             --security-group-ids ${{ secrets.AWS_SG_ID }} \
             --user-data file://user-data.sh \
-            --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=FoodAdvisor-Production}]' \
             --query 'Instances[0].InstanceId' \
             --output text)
           
@@ -47,81 +46,58 @@ jobs:
             
           echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
-      - name: Copy Docker Compose files
-        env:
-          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
-        run: |
-          echo "Creating deployment directory..."
-          mkdir -p deployment
-          
-          cp docker-compose.yml deployment/
-          
-          # Create .env file for Docker Compose
-          cat << EOF > deployment/.env
-          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-          JWT_SECRET=${{ secrets.JWT_SECRET }}
-          ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
-          PREVIEW_SECRET=$(openssl rand -hex 32)
-          PUBLIC_IP=${INSTANCE_IP}
-          EOF
-
-      - name: Install netcat
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y netcat-openbsd
-  
-      - name: Wait for SSH
-        env:
-          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
-        run: |
-          echo "Waiting for SSH to become available..."
-          # Try until port 22 is open
-          while ! nc -z $INSTANCE_IP 22; do
-            echo "SSH not ready yet..."
-            sleep 10
-          done
-          # Additional wait for user-data script to complete
-          sleep 60
-          echo "SSH is ready!"
-
       - name: Deploy using Docker Compose
         env:
           INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
           PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
         run: |
           # Save private key
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
           
+          # Create env file
+          cat << EOF > .env
+          DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+          JWT_SECRET=${JWT_SECRET}
+          ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
+          PUBLIC_IP=${INSTANCE_IP}
+          PREVIEW_SECRET=$(openssl rand -hex 32)
+          EOF
+          
           # Copy files to EC2
-          scp -i private_key.pem -o StrictHostKeyChecking=no -r deployment/* ec2-user@${INSTANCE_IP}:~/
+          scp -i private_key.pem -o StrictHostKeyChecking=no .env docker-compose.yml ec2-user@${INSTANCE_IP}:~/
           
           # Deploy using Docker Compose
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${INSTANCE_IP} '
+          ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${INSTANCE_IP} << 'EOF'
+            # Source environment variables
+            set -a
+            source .env
+            set +a
+            
+            # Pull and start containers
             docker-compose pull
             docker-compose up -d
-          '
+            
+            # Wait for containers to start
+            echo "Waiting for containers to start..."
+            sleep 30
+            docker-compose ps
+          EOF
 
       - name: Verify deployment
         env:
           INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
         run: |
-          echo "Waiting for services to initialize..."
-          sleep 30
-          
-          echo "Checking API health..."
-          curl -f http://${INSTANCE_IP}:1337/admin
-          
-          echo "Checking Client health..."
-          curl -f http://${INSTANCE_IP}:3000
-          
-          echo "Deployment Summary:"
-          echo "API URL: http://${INSTANCE_IP}:1337"
-          echo "Client URL: http://${INSTANCE_IP}:3000"
+          echo "Verifying deployment..."
+          curl --retry 5 --retry-delay 10 -f http://${INSTANCE_IP}:1337/admin || exit 1
+          curl --retry 5 --retry-delay 10 -f http://${INSTANCE_IP}:3000 || exit 1
+          echo "Deployment verified successfully!"
 
       - name: Cleanup on failure
         if: failure()
         env:
           INSTANCE_ID: ${{ steps.create-ec2.outputs.instance_id }}
-        run: |
-          aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+        run: aws ec2 terminate-instances --instance-ids $INSTANCE_ID
