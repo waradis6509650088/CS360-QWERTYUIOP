@@ -76,7 +76,7 @@ jobs:
       - name: Deploy using Docker Compose
         env:
           INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
-          PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
+          PRIVATE_KEY: ${{ secrets.AWS_PRIVATE_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
