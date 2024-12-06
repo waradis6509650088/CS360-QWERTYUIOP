@@ -118,14 +118,6 @@ jobs:
               -p 1337:1337 \
               --env-file .env \
               ${{ secrets.DOCKERHUB_USERNAME }}/foodadvisor-api:latest
-
-            # Check API environment
-            echo "Verifying API environment variables..."
-            sudo docker exec foodadvisor-api printenv | grep -E "JWT_SECRET|ADMIN_JWT_SECRET|PREVIEW_SECRET"
-
-            # Check Client environment
-            echo "Verifying Client environment variables..."
-            sudo docker exec foodadvisor-client printenv | grep -E "PREVIEW_SECRET|NEXT_PUBLIC_API_URL"
           EOF
 
       - name: Verify deployment with enhanced checks
