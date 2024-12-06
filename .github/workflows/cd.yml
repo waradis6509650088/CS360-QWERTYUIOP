@@ -1,18 +1,13 @@
 name: CD - Deploy to AWS
 
 on:
-  workflow_run:
-    workflows: ["CI - Test and Deploy Docker Images"]
-    types:
-      - completed
+  push:
     branches:
-      - main
+      - main 
       - develop
-      - improvement-coding-and-documentation
 
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     
     steps:
@@ -63,66 +58,60 @@ jobs:
           # Save private key
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-          
-          # Create env file
-          cat << EOF > .env
-          DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+            
+          # Create API env file
+          cat << EOF > api.env
+          HOST=0.0.0.0
+          PORT=1337
           JWT_SECRET=${JWT_SECRET}
           ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
-          PUBLIC_IP=${INSTANCE_IP}
+          STRAPI_ADMIN_CLIENT_URL=http://${INSTANCE_IP}:3000
+          STRAPI_ADMIN_CLIENT_PREVIEW_SECRET=$(openssl rand -hex 32)
+          EOF
+  
+          # Create Client env file
+          cat << EOF > client.env
+          NEXT_PUBLIC_API_URL=http://${INSTANCE_IP}:1337
           PREVIEW_SECRET=$(openssl rand -hex 32)
           EOF
-          
+  
+          # Create docker-compose env file
+          cat << EOF > .env
+          DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+          PUBLIC_IP=${INSTANCE_IP}
+          EOF
+            
           # Wait for user-data script to complete
           echo "Waiting for instance setup to complete..."
           sleep 90
-          
+            
           # Copy files to EC2
-          scp -i private_key.pem -o StrictHostKeyChecking=no .env docker-compose.yml ec2-user@${INSTANCE_IP}:~/
-          
+          scp -i private_key.pem -o StrictHostKeyChecking=no .env api.env client.env docker-compose.yml ec2-user@${INSTANCE_IP}:~/
+            
           # Deploy using Docker Compose
           ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${INSTANCE_IP} << 'EOF'
-            # Check disk space
-            echo "Checking disk space..."
-            df -h
-            
-            # Clean up any existing Docker resources
-            sudo docker system prune -af
-            
+            # Ensure environment files are in place
+            sudo mkdir -p /app/api /app/client
+            sudo mv api.env /app/api/.env
+            sudo mv client.env /app/client/.env
+              
             # Source environment variables
             set -a
             source .env
             set +a
-            
-            # Pull and start containers with error handling
-            echo "Pulling Docker images..."
-            sudo docker-compose pull || {
-              echo "Failed to pull images. Cleaning up and retrying..."
-              sudo docker system prune -af
-              sudo docker-compose pull
-            }
-            
-            echo "Starting containers..."
+              
+            # Pull and start containers with updated environment config
+            echo "Starting containers with configured environments..."
             sudo docker-compose up -d
-            
-            # Wait for containers to start and verify
-            echo "Waiting for containers to start..."
-            sleep 30
-            
-            # Check container status
-            echo "Checking container status..."
+              
+            # Verify environment files were mounted correctly
+            echo "Verifying API environment..."
+            sudo docker exec foodadvisor-api cat .env
+            echo "Verifying Client environment..."
+            sudo docker exec foodadvisor-client cat .env
+              
+            # Show container status
             sudo docker-compose ps
-            
-            # Display container logs if any container is not running
-            if [ $(sudo docker-compose ps -q | wc -l) -ne 2 ]; then
-              echo "Some containers failed to start. Displaying logs:"
-              sudo docker-compose logs
-              exit 1
-            fi
-            
-            # Check disk space after deployment
-            echo "Checking final disk space..."
-            df -h
           EOF
 
       - name: Verify deployment with enhanced checks
