@@ -662,6 +662,106 @@ describe('Restaurant Creation Integration', () => {
 });
 ```
 
+### 4. Unit Tests (userprofile.test.js)
+This test will include all the function from file: `<project folder>/client/pages/userprofile/index.js`
+
+Coverage includes:
+- 4.1. Rendering User Profile Information:
+   - Verifies that the component correctly renders user profile data, including the username and email.
+   - It mocks the `axios.get` request to return predefined user data and checks if the name and email appear on the pages.
+
+- 4.2. Updating User Profile Information:
+   - Simulates the user interaction to update their profile information
+   - It mocks the `axios.put` request and checks if the correct data is sent in the request.
+   - After updating, it verifies that a success toast notification is triggered, indicating that the profile was updated successfully.
+
+- 4.3. Handling API Error:
+   - Simulates an error from the API (`axios.get` is mocked to reject with an error).
+   - The test checks if the error is logged in the console correctly.
+
+Mocked Dependencies:
+  - `axios`: Mocks both `axios.get` for fetching user data and `axios.put` for updating user data.
+  - `react-toastify`: Mocks the toast notification to verify that the success message is displayed after a successful profile update.
+
+### 5. Integration Tests (userprofile.test.js)
+This test will include all the function from file: `<project folder>/client/pages/userprofile/index.js`
+
+Coverages includes:
+- 5.1. Fetching and Displaying User Profile Data from the API:
+   - Verifies that the API is called to fetch user profile data.
+   - Checks that `axios.get` is called with the correct URL and headers
+   - Ensures that the user data, such username and email, is displayed correctly on the screen.
+
+- 5.2. Updating User Profile and Handling API Response:
+  - Tests updating from fields like first name, last name, and email.
+  - Verifies that `axios.put` is called with the updated data and sent to the API correctly.
+  - Checks if a success message (toast) is displayed after the profile update is successful.
+
+- 5.3. Handling API Errors During Profile Fetch:
+  - Simulates a failed API request (e.g. network error) while fetching user data.
+  - Verifies that the error is logged in the console or handled appropriately.
+
+Fetching User Profile Data from the API:
+```javascript
+it('should fetch and display user profile data from the API', async () => {
+    const axiosGetSpy = jest.spyOn(axios, 'get').mockResolvedValue({
+        data: mockUserData
+    });
+
+    render(<UserProfile token={mockToken} />);
+
+    await waitFor(() => {
+        expect(axiosGetSpy).toHaveBeenCalledWith(
+            'http://localhost:1337/api/users/me?populate=*',
+            {
+                headers: {
+                    Authorization: `bearer ${mockToken}`,
+                },
+            }
+        );
+        expect(screen.getByText(/Testuser/i)).toBeInTheDocument();
+    });
+});
+
+```
+
+Updating User Profile and Displaying Success Message:
+```javascript
+it('should update user profile and handle successful API response', async () => {
+    const axiosPutSpy = jest.spyOn(axios, 'put').mockResolvedValue({});
+    const toastSuccessSpy = jest.spyOn(toast, 'success');
+
+    render(<UserProfile token={mockToken} />);
+
+    await waitFor(() => {
+        expect(screen.getByDisplayValue('Updatefirstname')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText(/First Name:/i), { target: { value: 'Updatedfirstname' } });
+    fireEvent.click(screen.getByText(/Edit/i));
+
+    await waitFor(() => {
+        expect(axiosPutSpy).toHaveBeenCalledWith(
+            'http://localhost:1337/api/users/me',
+            {
+                firstname: 'Updatedfirstname',
+                lastname: 'Updatedlastname',
+                email: 'updated@gmail.com',
+                job: initialUserData.job,
+                gender: ''
+            },
+            expect.objectContaining({ headers: expect.any(Object) })
+        );
+        expect(toastSuccessSpy).toHaveBeenCalledWith('Profile updated successfully');
+    });
+});
+
+```
+
+Mocked Dependencies:
+  - `axios`: Used to mock API calls (`axios.get` and `axios.put`).
+  - `react-toastify`: Used to verify if a success notification is displayed after updating the profile.
+
 ## Viewing Test Results
 
 The test results can be viewed in two ways:
