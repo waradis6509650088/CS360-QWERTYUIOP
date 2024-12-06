@@ -1,14 +1,18 @@
 name: CD - Deploy to AWS
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI - Test and Deploy Docker Images"]
+    types:
+      - completed
     branches:
-      - main 
+      - main
       - develop
       - improvement-coding-and-documentation
 
 jobs:
   deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     
     steps:
