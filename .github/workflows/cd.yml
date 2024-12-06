@@ -46,46 +46,63 @@ jobs:
             
           echo "public_ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
 
-      - name: Deploy using Docker Compose
-        env:
-          INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
-          PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
-        run: |
-          # Save private key
-          echo "$PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          
-          # Create env file
-          cat << EOF > .env
-          DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
-          JWT_SECRET=${JWT_SECRET}
-          ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
-          PUBLIC_IP=${INSTANCE_IP}
-          PREVIEW_SECRET=$(openssl rand -hex 32)
-          EOF
-          
-          # Copy files to EC2
-          scp -i private_key.pem -o StrictHostKeyChecking=no .env docker-compose.yml ec2-user@${INSTANCE_IP}:~/
-          
-          # Deploy using Docker Compose
-          ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${INSTANCE_IP} << 'EOF'
-            # Source environment variables
-            set -a
-            source .env
-            set +a
+          - name: Deploy using Docker Compose
+          env:
+            INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
+            PRIVATE_KEY: ${{ secrets.AWS_SSH_KEY }}
+            DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+            JWT_SECRET: ${{ secrets.JWT_SECRET }}
+            ADMIN_JWT_SECRET: ${{ secrets.ADMIN_JWT_SECRET }}
+          run: |
+            # Save private key
+            echo "$PRIVATE_KEY" > private_key.pem
+            chmod 600 private_key.pem
             
-            # Pull and start containers
-            docker-compose pull
-            docker-compose up -d
+            # Create env file
+            cat << EOF > .env
+            DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
+            JWT_SECRET=${JWT_SECRET}
+            ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET}
+            PUBLIC_IP=${INSTANCE_IP}
+            PREVIEW_SECRET=$(openssl rand -hex 32)
+            EOF
             
-            # Wait for containers to start
-            echo "Waiting for containers to start..."
-            sleep 30
-            docker-compose ps
-          EOF
+            # Wait for user-data script to complete
+            echo "Waiting for instance setup to complete..."
+            sleep 60
+            
+            # Copy files to EC2
+            scp -i private_key.pem -o StrictHostKeyChecking=no .env docker-compose.yml ec2-user@${INSTANCE_IP}:~/
+            
+            # Deploy using Docker Compose
+            ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${INSTANCE_IP} << 'EOF'
+              # Wait for Docker service to be fully available
+              while ! docker info > /dev/null 2>&1; do
+                echo "Waiting for Docker to be ready..."
+                sleep 5
+              done
+              
+              # Source environment variables
+              set -a
+              source .env
+              set +a
+              
+              # Verify Docker Compose installation
+              if ! command -v docker-compose &> /dev/null; then
+                echo "Docker Compose not found. Installing..."
+                sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+                sudo chmod +x /usr/local/bin/docker-compose
+              fi
+              
+              # Pull and start containers
+              sudo docker-compose pull
+              sudo docker-compose up -d
+              
+              # Wait for containers to start
+              echo "Waiting for containers to start..."
+              sleep 30
+              sudo docker-compose ps
+            EOF
 
       - name: Verify deployment
         env:
