@@ -26,11 +26,13 @@ jobs:
       - name: Create EC2 instance
         id: create-ec2
         run: |
+          # Create EC2 instance with larger root volume
           INSTANCE_ID=$(aws ec2 run-instances \
             --image-id ami-0230bd60aa48260c6 \
             --instance-type t2.medium \
             --key-name ${{ secrets.AWS_KP_NAME }} \
             --security-group-ids ${{ secrets.AWS_SG_ID }} \
+            --block-device-mappings '[{"DeviceName":"/dev/xvda","Ebs":{"VolumeSize":30,"VolumeType":"gp3"}}]' \
             --user-data file://user-data.sh \
             --query 'Instances[0].InstanceId' \
             --output text)
@@ -57,7 +59,7 @@ jobs:
           # Save private key
           echo "$PRIVATE_KEY" > private_key.pem
           chmod 600 private_key.pem
-            
+          
           # Create env file
           cat << EOF > .env
           DOCKERHUB_USERNAME=${DOCKERHUB_USERNAME}
@@ -66,55 +68,103 @@ jobs:
           PUBLIC_IP=${INSTANCE_IP}
           PREVIEW_SECRET=$(openssl rand -hex 32)
           EOF
-            
+          
           # Wait for user-data script to complete
           echo "Waiting for instance setup to complete..."
-          sleep 60
-            
+          sleep 90
+          
           # Copy files to EC2
           scp -i private_key.pem -o StrictHostKeyChecking=no .env docker-compose.yml ec2-user@${INSTANCE_IP}:~/
-            
+          
           # Deploy using Docker Compose
           ssh -i private_key.pem -o StrictHostKeyChecking=no ec2-user@${INSTANCE_IP} << 'EOF'
-            # Wait for Docker service to be fully available
-            while ! docker info > /dev/null 2>&1; do
-              echo "Waiting for Docker to be ready..."
-              sleep 5
-            done
-              
+            # Check disk space
+            echo "Checking disk space..."
+            df -h
+            
+            # Clean up any existing Docker resources
+            sudo docker system prune -af
+            
             # Source environment variables
             set -a
             source .env
             set +a
-              
-            # Verify Docker Compose installation
-            if ! command -v docker-compose &> /dev/null; then
-              echo "Docker Compose not found. Installing..."
-              sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            fi
-              
-            # Pull and start containers
-            sudo docker-compose pull
+            
+            # Pull and start containers with error handling
+            echo "Pulling Docker images..."
+            sudo docker-compose pull || {
+              echo "Failed to pull images. Cleaning up and retrying..."
+              sudo docker system prune -af
+              sudo docker-compose pull
+            }
+            
+            echo "Starting containers..."
             sudo docker-compose up -d
-              
-            # Wait for containers to start
+            
+            # Wait for containers to start and verify
             echo "Waiting for containers to start..."
             sleep 30
+            
+            # Check container status
+            echo "Checking container status..."
             sudo docker-compose ps
+            
+            # Display container logs if any container is not running
+            if [ $(sudo docker-compose ps -q | wc -l) -ne 2 ]; then
+              echo "Some containers failed to start. Displaying logs:"
+              sudo docker-compose logs
+              exit 1
+            fi
+            
+            # Check disk space after deployment
+            echo "Checking final disk space..."
+            df -h
           EOF
 
-      - name: Verify deployment
+      - name: Verify deployment with enhanced checks
         env:
           INSTANCE_IP: ${{ steps.create-ec2.outputs.public_ip }}
         run: |
           echo "Verifying deployment..."
-          curl --retry 5 --retry-delay 10 -f http://${INSTANCE_IP}:1337/admin || exit 1
-          curl --retry 5 --retry-delay 10 -f http://${INSTANCE_IP}:3000 || exit 1
+          
+          # Function to check endpoint
+          check_endpoint() {
+            local url=$1
+            local max_attempts=10
+            local attempt=1
+            
+            while [ $attempt -le $max_attempts ]; do
+              echo "Attempt $attempt to connect to $url"
+              if curl --silent --fail "$url" > /dev/null; then
+                return 0
+              fi
+              attempt=$((attempt + 1))
+              sleep 15
+            done
+            return 1
+          }
+          
+          # Check API endpoint
+          if ! check_endpoint "http://${INSTANCE_IP}:1337/admin"; then
+            echo "API endpoint verification failed"
+            exit 1
+          fi
+          
+          # Check client endpoint
+          if ! check_endpoint "http://${INSTANCE_IP}:3000"; then
+            echo "Client endpoint verification failed"
+            exit 1
+          fi
+          
           echo "Deployment verified successfully!"
 
       - name: Cleanup on failure
         if: failure()
         env:
           INSTANCE_ID: ${{ steps.create-ec2.outputs.instance_id }}
-        run: aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+        run: |
+          # Get instance logs before termination
+          aws ec2 get-console-output --instance-id $INSTANCE_ID
+          
+          # Terminate the instance
+          aws ec2 terminate-instances --instance-ids $INSTANCE_ID
