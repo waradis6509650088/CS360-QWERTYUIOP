@@ -737,6 +737,63 @@ Coverages includes:
   - Simulates a failed API request (e.g. network error) while fetching user data.
   - Verifies that the error is logged in the console or handled appropriately.
 
+Fetching User Profile Data from the API:
+```javascript
+it('should fetch and display user profile data from the API', async () => {
+    const axiosGetSpy = jest.spyOn(axios, 'get').mockResolvedValue({
+        data: mockUserData
+    });
+
+    render(<UserProfile token={mockToken} />);
+
+    await waitFor(() => {
+        expect(axiosGetSpy).toHaveBeenCalledWith(
+            'http://localhost:1337/api/users/me?populate=*',
+            {
+                headers: {
+                    Authorization: `bearer ${mockToken}`,
+                },
+            }
+        );
+        expect(screen.getByText(/Testuser/i)).toBeInTheDocument();
+    });
+});
+
+```
+
+Updating User Profile and Displaying Success Message:
+```javascript
+it('should update user profile and handle successful API response', async () => {
+    const axiosPutSpy = jest.spyOn(axios, 'put').mockResolvedValue({});
+    const toastSuccessSpy = jest.spyOn(toast, 'success');
+
+    render(<UserProfile token={mockToken} />);
+
+    await waitFor(() => {
+        expect(screen.getByDisplayValue('Updatefirstname')).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText(/First Name:/i), { target: { value: 'Updatedfirstname' } });
+    fireEvent.click(screen.getByText(/Edit/i));
+
+    await waitFor(() => {
+        expect(axiosPutSpy).toHaveBeenCalledWith(
+            'http://localhost:1337/api/users/me',
+            {
+                firstname: 'Updatedfirstname',
+                lastname: 'Updatedlastname',
+                email: 'updated@gmail.com',
+                job: initialUserData.job,
+                gender: ''
+            },
+            expect.objectContaining({ headers: expect.any(Object) })
+        );
+        expect(toastSuccessSpy).toHaveBeenCalledWith('Profile updated successfully');
+    });
+});
+
+```
+
 Mocked Dependencies:
   - `axios`: Used to mock API calls (`axios.get` and `axios.put`).
   - `react-toastify`: Used to verify if a success notification is displayed after updating the profile.
