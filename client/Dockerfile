@@ -4,13 +4,13 @@ FROM node:16-alpine
 WORKDIR /app/client
 
 # Copy package files  
-COPY client/package*.json client/yarn.lock ./
+COPY package*.json ./
 
 # Install dependencies
 RUN yarn install
 
 # Copy client source code
-COPY client/ .
+COPY . .
 
 EXPOSE 3000
 

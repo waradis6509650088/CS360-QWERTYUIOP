@@ -7,16 +7,18 @@ WORKDIR /app/api
 RUN apk add --no-cache python3 make g++ git
 
 # Copy package files
-COPY api/package*.json api/yarn.lock ./
+COPY package*.json ./
 
 # Install dependencies
-RUN yarn install
+RUN yarn
 
 # Copy API source code
-COPY api/ .
+COPY . .
 
 # Create uploads directory
 RUN mkdir -p public/uploads
+
+RUN node ./script/seed.js 
 
 # Set environment for testing
 ENV NODE_ENV=test
